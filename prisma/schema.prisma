@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String
+  role         String   @default("admin")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  sortOrder Int      @default(0)
+  items     Item[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Item {
+  id            String           @id @default(cuid())
+  title         String
+  slug          String           @unique
+  description   String           @default("")
+  price         Float
+  originalPrice Float?
+  condition     String           @default("Bom estado")
+  // "disponivel" | "reservado" | "vendido"
+  status        String           @default("disponivel")
+  acceptsOffers Boolean          @default(false)
+  featured      Boolean          @default(false)
+  categoryId    String?
+  category      Category?        @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  photos        ItemPhoto[]
+  messages      ContactMessage[]
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@index([status])
+  @@index([categoryId])
+}
+
+model ItemPhoto {
+  id                 String   @id @default(cuid())
+  itemId             String
+  item               Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  url                String?
+  cloud_storage_path String?
+  thumbnailPath      String?
+  isPublic           Boolean  @default(true)
+  sortOrder          Int      @default(0)
+  createdAt          DateTime @default(now())
+
+  @@index([itemId])
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  itemId    String?
+  item      Item?    @relation(fields: [itemId], references: [id], onDelete: SetNull)
+  name      String
+  email     String?
+  phone     String?
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([read])
+}
+
+model SiteSettings {
+  id                 String    @id @default("main")
+  siteTitle          String    @default("Garagem do Fabio")
+  heroTitle          String    @default("Tudo precisa ir!")
+  heroSubtitle       String    @default("")
+  whatsapp           String    @default("")
+  saleEndDate        DateTime?
+  pickupCity         String    @default("")
+  pickupNeighborhood String    @default("")
+  pickupInfo         String    @default("")
+  paymentInfo        String    @default("")
+  announcement       String    @default("")
+  updatedAt          DateTime  @updatedAt
+}

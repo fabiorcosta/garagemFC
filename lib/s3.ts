@@ -1,0 +1,54 @@
+import "server-only"
+import { randomUUID } from "node:crypto"
+import { mkdir, rm } from "node:fs/promises"
+import path from "node:path"
+import { DeleteObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3"
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
+import { getS3Client, s3Config, useLocalStorage } from "./aws-config"
+
+export const LOCAL_UPLOAD_DIR = path.join(process.cwd(), ".uploads")
+
+const EXT_BY_TYPE: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+}
+
+export function isAllowedImageType(contentType: string) {
+  return contentType in EXT_BY_TYPE
+}
+
+export function buildKey(contentType: string, variant: "full" | "thumb") {
+  const ext = EXT_BY_TYPE[contentType] ?? "jpg"
+  return `items/${randomUUID()}-${variant}.${ext}`
+}
+
+/** URL para o navegador fazer PUT da foto. Em modo local, aponta para a rota interna. */
+export async function createPresignedUpload(key: string, contentType: string) {
+  if (useLocalStorage) {
+    await mkdir(path.join(LOCAL_UPLOAD_DIR, "items"), { recursive: true })
+    return `/api/admin/upload/local?key=${encodeURIComponent(key)}`
+  }
+  const command = new PutObjectCommand({
+    Bucket: s3Config.bucket,
+    Key: key,
+    ContentType: contentType,
+    CacheControl: "public, max-age=31536000, immutable",
+  })
+  return getSignedUrl(getS3Client(), command, { expiresIn: 3600 })
+}
+
+export async function deleteFile(key: string | null | undefined) {
+  if (!key) return
+  if (useLocalStorage) {
+    const target = path.join(LOCAL_UPLOAD_DIR, key)
+    if (target.startsWith(LOCAL_UPLOAD_DIR + path.sep)) await rm(target, { force: true })
+    return
+  }
+  await getS3Client().send(new DeleteObjectCommand({ Bucket: s3Config.bucket, Key: key }))
+}
+
+/** Chaves válidas: items/<uuid>-(full|thumb).(jpg|png|webp) */
+export function isValidKey(key: string) {
+  return /^items\/[0-9a-f-]{36}-(full|thumb)\.(jpg|png|webp)$/.test(key)
+}
