@@ -7,7 +7,8 @@ import { cn } from "@/lib/utils"
 import { daysUntil } from "@/lib/format"
 import { getCategoriesWithCounts, getFeaturedItems, getSettings, getStatusCounts } from "@/lib/queries"
 
-export const revalidate = 30
+// Renderizado a cada visita: o banco só é acessível na rede interna do Railway, não durante o build.
+export const dynamic = "force-dynamic"
 
 export async function generateMetadata(): Promise<Metadata> {
   const s = await getSettings()

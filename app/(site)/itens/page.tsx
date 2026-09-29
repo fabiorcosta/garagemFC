@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils"
 import { getCatalog, getCategoriesWithCounts } from "@/lib/queries"
 import { FilterBar } from "./filter-bar"
 
-export const revalidate = 30
+export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
   title: "Catálogo",

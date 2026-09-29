@@ -3,7 +3,8 @@ import { CalendarClock, Info, MapPin, Wallet } from "lucide-react"
 import { WhatsAppButton } from "@/components/whatsapp-button"
 import { getSettings } from "@/lib/queries"
 
-export const revalidate = 30
+// Renderizado a cada visita: o banco só é acessível na rede interna do Railway, não durante o build.
+export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
   title: "Retirada e pagamento",
