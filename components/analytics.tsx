@@ -1,6 +1,9 @@
 import Script from "next/script"
 
-/** GA4: só carrega se NEXT_PUBLIC_GA_MEASUREMENT_ID estiver definido. */
+/**
+ * GA4: só carrega se NEXT_PUBLIC_GA_MEASUREMENT_ID estiver definido.
+ * Minimização (LGPD): sem Google Signals e sem uso para personalização de anúncios. O GA4 já não guarda IP.
+ */
 export function Analytics({ nonce }: { nonce?: string }) {
   const id = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
   // O ID vira código JS: só aceita o formato oficial do GA4 (G-XXXXXXXX), nada mais.
@@ -9,7 +12,7 @@ export function Analytics({ nonce }: { nonce?: string }) {
     <>
       <Script src={`https://www.googletagmanager.com/gtag/js?id=${id}`} strategy="afterInteractive" nonce={nonce} />
       <Script id="ga4" strategy="afterInteractive" nonce={nonce}>
-        {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${id}');`}
+        {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${id}',{allow_google_signals:false,allow_ad_personalization_signals:false});`}
       </Script>
     </>
   )
