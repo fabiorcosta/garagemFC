@@ -149,8 +149,9 @@ async function main() {
     catIds[name] = cat.id
   }
 
-  // Itens de exemplo só entram num banco vazio, para não sobrescrever os reais.
-  if ((await db.item.count()) === 0) {
+  // Itens de exemplo: só com SEED_SAMPLE_ITEMS=true (desenvolvimento) e num banco vazio.
+  // Em produção o seed roda a cada start; sem essa trava, apagar todos os itens os traria de volta.
+  if (process.env.SEED_SAMPLE_ITEMS === "true" && (await db.item.count()) === 0) {
     for (const it of items) {
       const { category, ...data } = it
       await db.item.create({ data: { ...data, slug: slugify(it.title), categoryId: catIds[category] } })
