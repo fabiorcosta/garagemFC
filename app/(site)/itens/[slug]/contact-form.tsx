@@ -13,10 +13,12 @@ export function ContactForm({
   itemId,
   itemTitle,
   status,
+  texts,
 }: {
   itemId: string
   itemTitle: string
   status: string
+  texts: { title: string; message: string; success: string; sold: string; reserved: string }
 }) {
   const [sending, setSending] = useState(false)
   const [sent, setSent] = useState(false)
@@ -26,9 +28,7 @@ export function ContactForm({
       <div className="flex items-start gap-3 rounded-2xl border bg-muted/60 p-4 text-sm">
         <Lock className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden />
         <p>
-          {status === "vendido"
-            ? "Este item já foi vendido. Dá uma olhada nos outros itens disponíveis!"
-            : "Este item está reservado para outra pessoa. Se a reserva cair, ele volta a ficar disponível aqui."}
+          {status === "vendido" ? texts.sold : texts.reserved}
         </p>
       </div>
     )
@@ -38,9 +38,7 @@ export function ContactForm({
     return (
       <div className="flex items-start gap-3 rounded-2xl border border-olive/30 bg-olive-soft p-4 text-sm text-olive">
         <CheckCircle2 className="mt-0.5 size-5 shrink-0" aria-hidden />
-        <p>
-          <strong>Mensagem enviada!</strong> O Fabio vai entrar em contato em breve.
-        </p>
+        <p className="font-medium">{texts.success}</p>
       </div>
     )
   }
@@ -50,7 +48,7 @@ export function ContactForm({
     const form = new FormData(e.currentTarget)
     const payload: Record<string, FormDataEntryValue> = { ...Object.fromEntries(form), itemId }
     if (!payload.email && !payload.phone) {
-      toast.error("Informe um telefone ou e-mail para o Fabio te responder.")
+      toast.error("Informe um telefone ou e-mail para receber a resposta.")
       return
     }
     setSending(true)
@@ -73,7 +71,7 @@ export function ContactForm({
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-3 rounded-2xl border bg-card p-4">
-      <h2 className="font-bold">Tenho interesse</h2>
+      <h2 className="font-bold">{texts.title}</h2>
       {/* Campo-isca contra robôs: humanos não veem */}
       <input type="text" name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden />
       <div className="grid gap-1.5">
@@ -98,7 +96,7 @@ export function ContactForm({
           required
           maxLength={1000}
           rows={3}
-          defaultValue={`Olá! Tenho interesse no item "${itemTitle}".`}
+          defaultValue={texts.message}
         />
       </div>
       <Button type="submit" disabled={sending} className="h-11 rounded-full text-base font-semibold">

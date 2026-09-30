@@ -9,7 +9,7 @@ import { track } from "@/lib/gtag"
 
 type Category = { slug: string; name: string }
 
-export function FilterBar({ categories }: { categories: Category[] }) {
+export function FilterBar({ categories, placeholder }: { categories: Category[]; placeholder: string }) {
   const router = useRouter()
   const pathname = usePathname()
   const params = useSearchParams()
@@ -49,7 +49,7 @@ export function FilterBar({ categories }: { categories: Category[] }) {
           name="q"
           key={params.get("q") ?? ""}
           defaultValue={params.get("q") ?? ""}
-          placeholder="Buscar sofá, TV, geladeira…"
+          placeholder={placeholder}
           aria-label="Buscar itens"
           className="h-12 w-full rounded-full border bg-card pr-12 pl-10 text-base outline-none focus:border-primary focus:ring-3 focus:ring-primary/20"
         />

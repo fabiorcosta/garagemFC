@@ -9,6 +9,7 @@ import { WhatsAppIcon } from "@/components/whatsapp-button"
 import { cn } from "@/lib/utils"
 import { adminFetch } from "@/lib/admin-fetch"
 import { onlyDigits, whatsappLink } from "@/lib/format"
+import { fill } from "@/lib/site-texts"
 
 type Msg = {
   id: string
@@ -29,7 +30,7 @@ const dateFmt = new Intl.DateTimeFormat("pt-BR", {
   timeZone: "America/Sao_Paulo",
 })
 
-export function MessagesList({ messages }: { messages: Msg[] }) {
+export function MessagesList({ messages, replyTemplate }: { messages: Msg[]; replyTemplate: string }) {
   const router = useRouter()
   const [open, setOpen] = useState<string | null>(null)
 
@@ -85,7 +86,7 @@ export function MessagesList({ messages }: { messages: Msg[] }) {
                   {m.phone && (
                     <>
                       <a
-                        href={whatsappLink(m.phone, `Olá ${m.name}! Aqui é o Fabio, da Garagem.`)}
+                        href={whatsappLink(m.phone, fill(replyTemplate, { nome: m.name.split(" ")[0] }))}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1.5 rounded-full bg-[#25D366] px-3 py-1.5 text-xs font-semibold text-[#08331A]"

@@ -9,7 +9,10 @@ export default async function SettingsPage() {
     : ""
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-extrabold">Configurações</h1>
+      <div>
+        <h1 className="text-2xl font-extrabold">Configurações</h1>
+        <p className="text-sm text-muted-foreground">Tudo o que aparece no site: banner, datas, retirada, WhatsApp e textos.</p>
+      </div>
       <SettingsForm
         initial={{
           siteTitle: s.siteTitle,
@@ -22,6 +25,9 @@ export default async function SettingsPage() {
           pickupInfo: s.pickupInfo,
           paymentInfo: s.paymentInfo,
           announcement: s.announcement,
+          showCountdown: s.showCountdown,
+          showStats: s.showStats,
+          texts: (s.texts ?? {}) as Record<string, string>,
         }}
       />
     </div>

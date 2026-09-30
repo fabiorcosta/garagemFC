@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { z } from "zod"
 import { db } from "@/lib/db"
 import { adminRoute, badRequest, revalidatePublic } from "@/lib/api"
+import { TEXTS, type TextKey } from "@/lib/site-texts"
 
 const text = (max: number) => z.string().trim().max(max).default("")
 
@@ -20,7 +21,23 @@ const schema = z.object({
   pickupInfo: text(2000),
   paymentInfo: text(2000),
   announcement: text(160),
+  showCountdown: z.boolean().default(true),
+  showStats: z.boolean().default(true),
+  texts: z.record(z.string(), z.string()).default({}),
 })
+
+/** Guarda só as chaves conhecidas; texto igual ao padrão ou vazio não é salvo (continua seguindo o padrão). */
+function cleanTexts(input: Record<string, string>): Record<string, string> | string {
+  const out: Record<string, string> = {}
+  for (const [key, raw] of Object.entries(input)) {
+    const def = TEXTS[key as TextKey]
+    if (!def) continue
+    const value = raw.trim()
+    if (value.length > def.max) return `"${def.label}" passou de ${def.max} caracteres`
+    if (value && value !== def.default) out[key] = value
+  }
+  return out
+}
 
 export const GET = adminRoute(async () => {
   const settings = await db.siteSettings.upsert({ where: { id: "main" }, update: {}, create: { id: "main" } })
@@ -30,11 +47,13 @@ export const GET = adminRoute(async () => {
 export const PUT = adminRoute(async (req: Request) => {
   const parsed = schema.safeParse(await req.json().catch(() => null))
   if (!parsed.success) return badRequest(parsed.error.issues[0]?.message ?? "Dados inválidos")
-  const { saleEndDate, ...rest } = parsed.data
+  const { saleEndDate, texts, ...rest } = parsed.data
+  const cleaned = cleanTexts(texts)
+  if (typeof cleaned === "string") return badRequest(cleaned)
   // A data vem do <input type="date"> (AAAA-MM-DD): fim do dia no horário de Brasília.
   const end = saleEndDate ? new Date(`${saleEndDate}T23:59:59-03:00`) : null
   if (end && Number.isNaN(end.getTime())) return badRequest("Data inválida")
-  const data = { ...rest, saleEndDate: end }
+  const data = { ...rest, saleEndDate: end, texts: cleaned }
   const settings = await db.siteSettings.upsert({ where: { id: "main" }, update: data, create: { id: "main", ...data } })
   revalidatePublic()
   return NextResponse.json(settings)

@@ -7,8 +7,6 @@ export const STATUS_LABEL: Record<ItemStatus, string> = {
   vendido: "Vendido",
 }
 
-export const CONDITIONS = ["Novo", "Seminovo", "Ótimo estado", "Bom estado", "Com marcas de uso", "Precisa de reparo"]
-
 export const PRICE_RANGES = [
   { value: "ate-200", label: "Até R$ 200", min: 0, max: 200 },
   { value: "200-500", label: "R$ 200 a 500", min: 200, max: 500 },

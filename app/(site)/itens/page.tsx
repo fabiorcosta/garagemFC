@@ -5,14 +5,13 @@ import { PackageSearch } from "lucide-react"
 import { ItemCard, ItemGrid } from "@/components/item-card"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { getCatalog, getCategoriesWithCounts } from "@/lib/queries"
+import { getCatalog, getCategoriesWithCounts, getSettings } from "@/lib/queries"
 import { FilterBar } from "./filter-bar"
 
 export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
   title: "Catálogo",
-  openGraph: { title: "Catálogo — Garagem do Fabio" },
 }
 
 function str(v: string | string[] | undefined) {
@@ -28,7 +27,8 @@ export default async function CatalogPage(props: PageProps<"/itens">) {
     status: str(sp.status),
     page: Number(str(sp.page)) || 1,
   }
-  const [categories, { items, total, page, totalPages }] = await Promise.all([
+  const [settings, categories, { items, total, page, totalPages }] = await Promise.all([
+    getSettings(),
     getCategoriesWithCounts(),
     getCatalog(filters),
   ])
@@ -45,21 +45,21 @@ export default async function CatalogPage(props: PageProps<"/itens">) {
   return (
     <div className="flex flex-col gap-5 py-6">
       <div>
-        <h1 className="text-2xl font-extrabold sm:text-3xl">{currentCat?.name ?? "Todos os itens"}</h1>
+        <h1 className="text-2xl font-extrabold sm:text-3xl">{currentCat?.name ?? settings.t.catalogTitle}</h1>
         <p className="text-sm text-muted-foreground">
           {total} {total === 1 ? "item encontrado" : "itens encontrados"}
         </p>
       </div>
 
       <Suspense>
-        <FilterBar categories={categories.map((c) => ({ slug: c.slug, name: c.name }))} />
+        <FilterBar placeholder={settings.t.searchPlaceholder} categories={categories.map((c) => ({ slug: c.slug, name: c.name }))} />
       </Suspense>
 
       {items.length === 0 ? (
         <div className="flex flex-col items-center gap-3 rounded-3xl border border-dashed bg-card px-6 py-16 text-center">
           <PackageSearch className="size-10 text-muted-foreground" aria-hidden />
-          <p className="font-semibold">Nenhum item encontrado</p>
-          <p className="text-sm text-muted-foreground">Tente outra busca ou remova alguns filtros.</p>
+          <p className="font-semibold">{settings.t.emptyTitle}</p>
+          <p className="text-sm text-muted-foreground">{settings.t.emptyText}</p>
           <Link href="/itens" className={cn(buttonVariants(), "mt-2 h-10 rounded-full px-5")}>
             Limpar filtros
           </Link>

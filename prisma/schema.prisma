@@ -90,5 +90,9 @@ model SiteSettings {
   pickupInfo         String    @default("")
   paymentInfo        String    @default("")
   announcement       String    @default("")
+  showCountdown      Boolean   @default(true)
+  showStats          Boolean   @default(true)
+  /// Textos editáveis do site (chaves em lib/site-texts.ts); vazio = texto padrão
+  texts              Json      @default("{}")
   updatedAt          DateTime  @updatedAt
 }

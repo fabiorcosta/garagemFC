@@ -2,6 +2,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { ExternalLink } from "lucide-react"
 import { db } from "@/lib/db"
+import { getSettings } from "@/lib/queries"
 import { photoThumbUrl } from "@/lib/file-url"
 import { ItemForm } from "../item-form"
 
@@ -22,6 +23,7 @@ export default async function EditItemPage(props: PageProps<"/admin/itens/[id]">
         </Link>
       </div>
       <ItemForm
+        conditions={(await getSettings()).t.conditions.split("\n").map((c) => c.trim()).filter(Boolean)}
         categories={categories}
         initial={{
           id: item.id,

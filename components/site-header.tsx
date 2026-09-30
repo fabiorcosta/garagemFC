@@ -30,12 +30,10 @@ export function SiteHeader({ title, announcement }: { title: string; announcemen
   )
 }
 
-export function SiteFooter({ title }: { title: string }) {
+export function SiteFooter({ text }: { text: string }) {
   return (
     <footer className="mt-16 border-t py-8 text-center text-xs text-muted-foreground">
-      <p>
-        {title} · venda de mudança · pagamento e retirada combinados pelo WhatsApp
-      </p>
+      <p className="px-4">{text}</p>
     </footer>
   )
 }

@@ -7,6 +7,7 @@ import { WhatsAppButton } from "@/components/whatsapp-button"
 import { photoFullUrl } from "@/lib/file-url"
 import { formatPrice, siteUrl } from "@/lib/format"
 import { getItemBySlug, getSettings } from "@/lib/queries"
+import { fill } from "@/lib/site-texts"
 import { ContactForm } from "./contact-form"
 import { Gallery } from "./gallery"
 import { ShareButton, TrackView } from "./share-button"
@@ -53,6 +54,8 @@ export default async function ItemPage(props: PageProps<"/itens/[slug]">) {
   const photos = item.photos.map(photoFullUrl).filter((u): u is string => !!u)
   const url = `${siteUrl()}/itens/${item.slug}`
   const available = item.status === "disponivel"
+  const t = settings.t
+  const waMessage = fill(t.whatsappItemMessage, { item: item.title, link: url })
 
   return (
     <div className="flex flex-col gap-6 py-5 pb-28">
@@ -62,7 +65,7 @@ export default async function ItemPage(props: PageProps<"/itens/[slug]">) {
         className="flex w-fit items-center gap-1 text-sm font-medium text-muted-foreground hover:text-primary"
       >
         <ChevronLeft className="size-4" aria-hidden />
-        {item.category?.name ?? "Todos os itens"}
+        {item.category?.name ?? t.catalogTitle}
       </Link>
 
       <div className="grid gap-6 md:grid-cols-2 md:gap-10">
@@ -91,16 +94,28 @@ export default async function ItemPage(props: PageProps<"/itens/[slug]">) {
               <WhatsAppButton
                 phone={settings.whatsapp}
                 itemName={item.title}
-                message={`Olá! Tenho interesse no item: ${item.title}. Vi no site ${url}`}
+                label={t.whatsappButton}
+                message={waMessage}
               />
             )}
             <ShareButton title={item.title} url={url} />
           </div>
 
-          <ContactForm itemId={item.id} itemTitle={item.title} status={item.status} />
+          <ContactForm
+            itemId={item.id}
+            itemTitle={item.title}
+            status={item.status}
+            texts={{
+              title: t.contactTitle,
+              message: fill(t.contactMessage, { item: item.title }),
+              success: t.contactSuccess,
+              sold: t.soldMessage,
+              reserved: t.reservedMessage,
+            }}
+          />
 
           <p className="text-xs text-muted-foreground">
-            Retirada em {settings.pickupNeighborhood || settings.pickupCity || "local a combinar"}.{" "}
+            {fill(t.pickupNote, { local: settings.pickupNeighborhood || settings.pickupCity || "local a combinar" })}{" "}
             <Link href="/retirada" className="font-medium text-primary underline-offset-2 hover:underline">
               Como funciona a retirada
             </Link>
@@ -114,7 +129,7 @@ export default async function ItemPage(props: PageProps<"/itens/[slug]">) {
           phone={settings.whatsapp}
           itemName={item.title}
           label="WhatsApp"
-          message={`Olá! Tenho interesse no item: ${item.title}. Vi no site ${url}`}
+          message={waMessage}
           className="md:hidden"
         />
       )}

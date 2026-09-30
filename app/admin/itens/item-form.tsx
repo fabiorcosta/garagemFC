@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { adminFetch } from "@/lib/admin-fetch"
-import { CONDITIONS, STATUS_LABEL, STATUSES } from "@/lib/format"
+import { STATUS_LABEL, STATUSES } from "@/lib/format"
 
 export type ItemFormValues = {
   id?: string
@@ -30,7 +30,15 @@ export type ItemFormValues = {
 const selectCls =
   "h-10 w-full rounded-lg border border-input bg-card px-3 text-sm outline-none focus:border-ring focus:ring-3 focus:ring-ring/50"
 
-export function ItemForm({ initial, categories }: { initial: ItemFormValues; categories: { id: string; name: string }[] }) {
+export function ItemForm({
+  initial,
+  categories,
+  conditions: conditionOptions,
+}: {
+  initial: ItemFormValues
+  categories: { id: string; name: string }[]
+  conditions: string[]
+}) {
   const router = useRouter()
   const [values, setValues] = useState(initial)
   const [photos, setPhotos] = useState<UploadedPhoto[]>(() =>
@@ -48,7 +56,7 @@ export function ItemForm({ initial, categories }: { initial: ItemFormValues; cat
   const set = <K extends keyof ItemFormValues>(k: K, v: ItemFormValues[K]) => setValues((prev) => ({ ...prev, [k]: v }))
 
   const uploading = photos.some((p) => p.state === "compressing" || p.state === "uploading")
-  const conditions = CONDITIONS.includes(values.condition) ? CONDITIONS : [values.condition, ...CONDITIONS]
+  const conditions = conditionOptions.includes(values.condition) ? conditionOptions : [values.condition, ...conditionOptions]
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()

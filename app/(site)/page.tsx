@@ -5,6 +5,7 @@ import { ItemCard, ItemGrid } from "@/components/item-card"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { daysUntil } from "@/lib/format"
+import { fill } from "@/lib/site-texts"
 import { getCategoriesWithCounts, getFeaturedItems, getSettings, getStatusCounts } from "@/lib/queries"
 
 // Renderizado a cada visita: o banco só é acessível na rede interna do Railway, não durante o build.
@@ -14,7 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const s = await getSettings()
   return {
     title: { absolute: s.siteTitle },
-    description: s.heroSubtitle,
+    description: s.heroSubtitle || s.t.seoDescription,
     openGraph: { title: s.heroTitle, description: s.heroSubtitle },
   }
 }
@@ -26,7 +27,8 @@ export default async function HomePage() {
     getFeaturedItems(),
     getCategoriesWithCounts(),
   ])
-  const days = daysUntil(settings.saleEndDate)
+  const t = settings.t
+  const days = settings.showCountdown ? daysUntil(settings.saleEndDate) : null
   const endLabel = settings.saleEndDate?.toLocaleDateString("pt-BR", {
     day: "numeric",
     month: "long",
@@ -40,7 +42,7 @@ export default async function HomePage() {
           {days !== null && (
             <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">
               <CalendarClock className="size-4" aria-hidden />
-              {days === 0 ? "Último dia!" : `Faltam ${days} ${days === 1 ? "dia" : "dias"}`}
+              {days === 0 ? t.countdownLastDay : fill(t.countdown, { dias: days }).replace(/\b1 dias\b/, "1 dia")}
               {endLabel && ` · até ${endLabel}`}
             </span>
           )}
@@ -53,7 +55,7 @@ export default async function HomePage() {
               "mt-2 h-12 w-fit rounded-full bg-white px-6 text-base font-bold text-primary hover:bg-white/90",
             )}
           >
-            Ver todos os itens
+            {t.heroCta}
             <ArrowRight className="size-5" aria-hidden />
           </Link>
         </div>
@@ -61,15 +63,17 @@ export default async function HomePage() {
         <div aria-hidden className="absolute -top-10 right-24 size-32 rounded-full bg-white/10" />
       </section>
 
-      <section className="fade-in grid grid-cols-3 gap-3" aria-label="Resumo">
-        <Stat value={counts.disponivel} label="Disponíveis" className="bg-olive-soft text-olive" href="/itens?status=disponivel" />
-        <Stat value={counts.reservado} label="Reservados" className="bg-amber-soft text-[#8A5A0B]" />
-        <Stat value={counts.vendido} label="Vendidos" className="bg-terracotta-soft text-primary" />
-      </section>
+      {settings.showStats && (
+        <section className="fade-in grid grid-cols-3 gap-3" aria-label="Resumo">
+          <Stat value={counts.disponivel} label={t.statAvailable} className="bg-olive-soft text-olive" href="/itens?status=disponivel" />
+          <Stat value={counts.reservado} label={t.statReserved} className="bg-amber-soft text-[#8A5A0B]" />
+          <Stat value={counts.vendido} label={t.statSold} className="bg-terracotta-soft text-primary" />
+        </section>
+      )}
 
       {featured.length > 0 && (
         <section className="flex flex-col gap-4">
-          <SectionTitle title="Destaques" href="/itens" />
+          <SectionTitle title={t.featuredTitle} href="/itens" />
           <ItemGrid>
             {featured.map((item, i) => (
               <div key={item.id} className="fade-in" style={{ animationDelay: `${i * 50}ms` }}>
@@ -82,7 +86,7 @@ export default async function HomePage() {
 
       {categories.length > 0 && (
         <section className="flex flex-col gap-4">
-          <SectionTitle title="Categorias" />
+          <SectionTitle title={t.categoriesTitle} />
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {categories.map((c) => (
               <Link

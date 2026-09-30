@@ -1,7 +1,9 @@
 import { db } from "@/lib/db"
+import { getSettings } from "@/lib/queries"
 import { MessagesList } from "./messages-list"
 
 export default async function MessagesPage() {
+  const settings = await getSettings()
   const messages = await db.contactMessage.findMany({
     orderBy: { createdAt: "desc" },
     take: 200,
@@ -17,6 +19,7 @@ export default async function MessagesPage() {
         </p>
       </div>
       <MessagesList
+        replyTemplate={settings.t.whatsappReplyMessage}
         messages={messages.map((m) => ({
           id: m.id,
           name: m.name,

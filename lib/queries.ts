@@ -3,12 +3,13 @@ import { cache } from "react"
 import type { Prisma } from "@prisma/client"
 import { db } from "./db"
 import { PRICE_RANGES } from "./format"
+import { resolveTexts } from "./site-texts"
 
 export const getSettings = cache(async () => {
-  return (
+  const s =
     (await db.siteSettings.findUnique({ where: { id: "main" } })) ??
     (await db.siteSettings.create({ data: { id: "main" } }))
-  )
+  return { ...s, t: resolveTexts(s.texts) }
 })
 
 export const itemCardInclude = {
