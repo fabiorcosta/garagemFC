@@ -21,6 +21,7 @@ export const GET = adminRoute<{ id: string }>(async (_req, { params }, { db }) =
       description: true,
       price: true,
       originalPrice: true,
+      referenceUrl: true,
       condition: true,
       acceptsOffers: true,
       featured: true,
@@ -58,7 +59,7 @@ export const PUT = adminRoute<{ id: string }>(async (req, { params }, { db, tran
       const slug = data.title === existing.title ? existing.slug : await uniqueSlug(tx, data.title, id)
       const item = await tx.item.update({
         where: { id },
-        data: { ...data, originalPrice: data.originalPrice || null, slug },
+        data: { ...data, originalPrice: data.originalPrice || null, referenceUrl: data.referenceUrl || null, slug },
         select: itemPublicFields,
       })
       const removed = await syncPhotos(tx, id, photos)

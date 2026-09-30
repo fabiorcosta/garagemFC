@@ -1,11 +1,11 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ChevronLeft, Sparkles } from "lucide-react"
+import { ChevronLeft, ExternalLink, Sparkles } from "lucide-react"
 import { OffersBadge, Price, StatusBadge } from "@/components/item-badges"
 import { WhatsAppButton } from "@/components/whatsapp-button"
 import { photoFullUrl } from "@/lib/file-url"
-import { formatPrice, siteUrl } from "@/lib/format"
+import { formatPrice, safeHttpsUrl, siteUrl } from "@/lib/format"
 import { getItemBySlug, getSettings } from "@/lib/queries"
 import { fill } from "@/lib/site-texts"
 import { ContactForm } from "./contact-form"
@@ -52,6 +52,7 @@ export default async function ItemPage(props: PageProps<"/itens/[slug]">) {
   const url = `${siteUrl()}/itens/${item.slug}`
   const available = item.status === "disponivel"
   const t = settings.t
+  const reference = safeHttpsUrl(item.referenceUrl)
   const waMessage = fill(t.whatsappItemMessage, { item: item.title, link: url })
 
   return (
@@ -80,6 +81,17 @@ export default async function ItemPage(props: PageProps<"/itens/[slug]">) {
             </div>
             <h1 className="text-2xl leading-tight font-extrabold text-balance sm:text-3xl">{item.title}</h1>
             <Price price={item.price} originalPrice={item.originalPrice} size="lg" />
+            {reference && (
+              <a
+                href={reference.href}
+                target="_blank"
+                rel="noopener noreferrer nofollow"
+                className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-muted-foreground underline-offset-2 hover:text-primary hover:underline"
+              >
+                <ExternalLink className="size-4" aria-hidden />
+                {t.referenceLabel} <span className="text-xs">({reference.host})</span>
+              </a>
+            )}
           </div>
 
           {item.description && (

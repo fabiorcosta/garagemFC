@@ -32,6 +32,7 @@ export const TEXTS = {
   emptyText: { group: "catalogo", label: "Busca sem resultado: texto", default: "Tente outra busca ou remova alguns filtros.", max: 160 },
 
   // Página do item
+  referenceLabel: { group: "item", label: "Texto do link do produto novo", default: "Ver o produto novo na loja", max: 60 },
   whatsappButton: { group: "item", label: "Botão do WhatsApp", default: "Chamar no WhatsApp", max: 40 },
   contactTitle: { group: "item", label: "Título do formulário", default: "Tenho interesse", max: 60 },
   contactMessage: { group: "item", label: "Mensagem sugerida no formulário", default: 'Olá! Tenho interesse no item "{item}".', max: 300, hint: "{item} = nome do item" },

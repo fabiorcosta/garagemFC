@@ -49,3 +49,15 @@ export function daysUntil(date: Date | null | undefined) {
 export function siteUrl() {
   return (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "")
 }
+
+/** Devolve o link só se for https:// válido (segunda barreira antes de exibir); senão null. */
+export function safeHttpsUrl(value: string | null | undefined) {
+  if (!value) return null
+  try {
+    const u = new URL(value)
+    if (u.protocol !== "https:" || u.username || u.password) return null
+    return { href: u.href, host: u.hostname.replace(/^www\./, "") }
+  } catch {
+    return null
+  }
+}

@@ -4,6 +4,7 @@ import { z } from "zod"
 import { idSchema } from "./api"
 import type { AdminDb } from "./db"
 import { slugify, STATUSES } from "./format"
+import { referenceUrlSchema } from "./validators"
 import { deleteFile, isValidKey } from "./s3"
 
 const price = z.coerce.number({ message: "Preço inválido" }).min(0, "Preço inválido").max(1_000_000, "Preço alto demais")
@@ -19,6 +20,7 @@ export const itemSchema = z.strictObject({
   description: z.string().trim().max(5000).default(""),
   price,
   originalPrice: price.nullable().optional(),
+  referenceUrl: referenceUrlSchema.default(""),
   condition: z.string().trim().min(1).max(40).default("Bom estado"),
   status: z.enum(STATUSES).default("disponivel"),
   acceptsOffers: z.boolean().default(false),

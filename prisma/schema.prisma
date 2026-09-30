@@ -37,6 +37,8 @@ model Item {
   description   String           @default("")
   price         Float
   originalPrice Float?
+  /// Link do produto novo (referência de preço). Só https, validado no servidor.
+  referenceUrl  String?
   condition     String           @default("Bom estado")
   // "disponivel" | "reservado" | "vendido"
   status        String           @default("disponivel")

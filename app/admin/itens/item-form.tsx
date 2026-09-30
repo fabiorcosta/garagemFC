@@ -19,6 +19,7 @@ export type ItemFormValues = {
   description: string
   price: number | ""
   originalPrice: number | ""
+  referenceUrl: string
   condition: string
   status: string
   acceptsOffers: boolean
@@ -72,6 +73,7 @@ export function ItemForm({
         status: values.status,
         acceptsOffers: values.acceptsOffers,
         featured: values.featured,
+        referenceUrl: values.referenceUrl.trim(),
         price: Number(values.price),
         originalPrice: values.originalPrice === "" ? null : Number(values.originalPrice),
         categoryId: values.categoryId || null,
@@ -128,6 +130,22 @@ export function ItemForm({
             onChange={(e) => set("originalPrice", e.target.value === "" ? "" : Number(e.target.value))}
             className="h-10"
           />
+        </div>
+        <div className="grid gap-1.5 sm:col-span-2">
+          <Label htmlFor="referenceUrl">Link do produto novo (opcional)</Label>
+          <Input
+            id="referenceUrl"
+            type="url"
+            inputMode="url"
+            maxLength={500}
+            placeholder="https://www.loja.com.br/produto…"
+            value={values.referenceUrl}
+            onChange={(e) => set("referenceUrl", e.target.value)}
+            className="h-10"
+          />
+          <p className="text-xs text-muted-foreground">
+            Página do mesmo produto novo numa loja, para o comprador comparar o preço. Só links https://.
+          </p>
         </div>
         <div className="grid gap-1.5">
           <Label htmlFor="condition">Condição</Label>

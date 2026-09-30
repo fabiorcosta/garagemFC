@@ -32,6 +32,7 @@ export default async function EditItemPage(props: PageProps<"/admin/itens/[id]">
           description: item.description,
           price: item.price,
           originalPrice: item.originalPrice ?? "",
+          referenceUrl: item.referenceUrl ?? "",
           condition: item.condition,
           status: item.status,
           acceptsOffers: item.acceptsOffers,
