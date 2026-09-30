@@ -18,8 +18,10 @@ export type UploadedPhoto = {
   error?: string
 }
 
-const FULL_OPTS = { maxWidthOrHeight: 1600, initialQuality: 0.8, maxSizeMB: 0.4, fileType: "image/jpeg", useWebWorker: true }
-const THUMB_OPTS = { maxWidthOrHeight: 400, initialQuality: 0.7, maxSizeMB: 0.03, fileType: "image/jpeg", useWebWorker: true }
+// useWebWorker: false — com true a biblioteca baixa o próprio código de cdn.jsdelivr.net em tempo de execução
+// (risco de cadeia de suprimentos e bloqueado pela CSP). Roda na thread principal, sem código externo.
+const FULL_OPTS = { maxWidthOrHeight: 1600, initialQuality: 0.8, maxSizeMB: 0.4, fileType: "image/jpeg", useWebWorker: false }
+const THUMB_OPTS = { maxWidthOrHeight: 400, initialQuality: 0.7, maxSizeMB: 0.03, fileType: "image/jpeg", useWebWorker: false }
 
 function putWithProgress(url: string, blob: Blob, onProgress: (p: number) => void) {
   return new Promise<void>((resolve, reject) => {
@@ -61,7 +63,7 @@ export function PhotoUploader({
       const urls = await adminFetch<{ full: { key: string; uploadUrl: string }; thumb: { key: string; uploadUrl: string } }>(
         "/api/admin/upload",
         "POST",
-        { contentType: full.type },
+        { contentType: full.type, fullSize: full.size, thumbSize: thumb.size },
       )
       const total = full.size + thumb.size
       let doneFull = 0

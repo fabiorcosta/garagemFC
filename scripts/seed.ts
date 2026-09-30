@@ -2,7 +2,8 @@ import { PrismaClient } from "@prisma/client"
 import bcrypt from "bcryptjs"
 import { slugify } from "../lib/format"
 
-const db = new PrismaClient()
+// Roda com o papel DONO (as tabelas têm RLS forçado; o papel do app não enxerga "User").
+const db = new PrismaClient({ datasourceUrl: process.env.MIGRATE_DATABASE_URL })
 
 const categories = [
   "Sofás e Poltronas",
@@ -127,26 +128,46 @@ const items: SeedItem[] = [
   },
 ]
 
+const BCRYPT_HASH = /^\$2[aby]\$1[0-4]\$[./A-Za-z0-9]{53}$/
+
+/**
+ * Admin:
+ *  - ADMIN_PASSWORD_HASH (produção): só o hash fica nas variáveis; é aplicado se mudou.
+ *  - SEED_ADMIN_PASSWORD (desenvolvimento): usado só para CRIAR o admin; nunca sobrescreve senha existente.
+ */
+async function ensureAdmin() {
+  const email = process.env.SEED_ADMIN_EMAIL?.trim().toLowerCase()
+  if (!email) throw new Error("Defina SEED_ADMIN_EMAIL")
+  const hash = process.env.ADMIN_PASSWORD_HASH?.trim()
+  const plain = process.env.SEED_ADMIN_PASSWORD
+  if (hash && !BCRYPT_HASH.test(hash)) throw new Error("ADMIN_PASSWORD_HASH não é um hash bcrypt válido")
+
+  const existing = await db.user.findUnique({ where: { email }, select: { passwordHash: true } })
+  if (existing) {
+    if (hash && existing.passwordHash !== hash) {
+      await db.user.update({ where: { email }, data: { passwordHash: hash } })
+      return "senha atualizada pelo hash"
+    }
+    return "sem alteração"
+  }
+  if (!hash && (!plain || plain.length < 12)) throw new Error("Admin inexistente: defina ADMIN_PASSWORD_HASH (ou SEED_ADMIN_PASSWORD com 12+ caracteres)")
+  await db.user.create({
+    data: { email, name: "Fabio", role: "admin", passwordHash: hash ?? (await bcrypt.hash(plain!, 12)) },
+  })
+  return "criado"
+}
+
 async function main() {
   const email = process.env.SEED_ADMIN_EMAIL
-  const password = process.env.SEED_ADMIN_PASSWORD
-  if (!email || !password) throw new Error("Defina SEED_ADMIN_EMAIL e SEED_ADMIN_PASSWORD no .env")
+  const adminStatus = await ensureAdmin()
 
-  await db.user.upsert({
-    where: { email },
-    update: { passwordHash: await bcrypt.hash(password, 12) },
-    create: { email, name: "Fabio", role: "admin", passwordHash: await bcrypt.hash(password, 12) },
-  })
-
+  // Categorias padrão só num banco sem nenhuma (senão, apagar uma no admin a traria de volta).
   const catIds: Record<string, string> = {}
-  for (const [i, name] of categories.entries()) {
-    const slug = slugify(name)
-    const cat = await db.category.upsert({
-      where: { slug },
-      update: {},
-      create: { name, slug, sortOrder: i },
-    })
-    catIds[name] = cat.id
+  if ((await db.category.count()) === 0) {
+    for (const [i, name] of categories.entries()) {
+      const cat = await db.category.create({ data: { name, slug: slugify(name), sortOrder: i } })
+      catIds[name] = cat.id
+    }
   }
 
   // Itens de exemplo: só com SEED_SAMPLE_ITEMS=true (desenvolvimento) e num banco vazio.
@@ -154,7 +175,7 @@ async function main() {
   if (process.env.SEED_SAMPLE_ITEMS === "true" && (await db.item.count()) === 0) {
     for (const it of items) {
       const { category, ...data } = it
-      await db.item.create({ data: { ...data, slug: slugify(it.title), categoryId: catIds[category] } })
+      await db.item.create({ data: { ...data, slug: slugify(it.title), categoryId: catIds[category] ?? null } })
     }
   }
 
@@ -176,7 +197,7 @@ async function main() {
     },
   })
 
-  console.log(`Seed ok: admin ${email}, ${categories.length} categorias, ${await db.item.count()} itens.`)
+  console.log(`Seed ok: admin ${email} (${adminStatus}), ${await db.category.count()} categorias, ${await db.item.count()} itens.`)
 }
 
 main()

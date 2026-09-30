@@ -1,7 +1,8 @@
-import { db } from "@/lib/db"
+import { adminPageContext } from "@/lib/admin-auth"
 import { CategoriesManager } from "./categories-manager"
 
 export default async function CategoriesPage() {
+  const { db } = await adminPageContext()
   const categories = await db.category.findMany({
     orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
     include: { _count: { select: { items: true } } },

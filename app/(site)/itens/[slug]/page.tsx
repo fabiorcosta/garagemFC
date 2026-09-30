@@ -12,11 +12,8 @@ import { ContactForm } from "./contact-form"
 import { Gallery } from "./gallery"
 import { ShareButton, TrackView } from "./share-button"
 
-export const revalidate = 30
-
-export async function generateStaticParams() {
-  return []
-}
+// Sempre gerada na hora: a CSP usa um nonce novo por visita (ver proxy.ts).
+export const dynamic = "force-dynamic"
 
 export async function generateMetadata(props: PageProps<"/itens/[slug]">): Promise<Metadata> {
   const { slug } = await props.params

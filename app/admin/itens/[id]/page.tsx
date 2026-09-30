@@ -1,12 +1,13 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { ExternalLink } from "lucide-react"
-import { db } from "@/lib/db"
+import { adminPageContext } from "@/lib/admin-auth"
 import { getSettings } from "@/lib/queries"
 import { photoThumbUrl } from "@/lib/file-url"
 import { ItemForm } from "../item-form"
 
 export default async function EditItemPage(props: PageProps<"/admin/itens/[id]">) {
+  const { db } = await adminPageContext()
   const { id } = await props.params
   const [item, categories] = await Promise.all([
     db.item.findUnique({ where: { id }, include: { photos: { orderBy: { sortOrder: "asc" } } } }),

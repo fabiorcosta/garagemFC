@@ -4,7 +4,10 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  // Papel garagem_public (visitantes), sujeito a RLS. O admin usa ADMIN_DATABASE_URL (lib/db.ts).
+  // O CLI (db push) usa o papel dono via directUrl.
+  url       = env("DATABASE_URL")
+  directUrl = env("MIGRATE_DATABASE_URL")
 }
 
 model User {
@@ -95,4 +98,11 @@ model SiteSettings {
   /// Textos editáveis do site (chaves em lib/site-texts.ts); vazio = texto padrão
   texts              Json      @default("{}")
   updatedAt          DateTime  @updatedAt
+}
+
+/// Contador de tentativas (login, contato, admin). Acessado só pela função rate_limit_hit (SECURITY DEFINER).
+model RateLimit {
+  key         String   @id
+  windowStart DateTime @default(now())
+  count       Int      @default(0)
 }

@@ -2,11 +2,12 @@ import Link from "next/link"
 import { Plus } from "lucide-react"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { db } from "@/lib/db"
+import { adminPageContext } from "@/lib/admin-auth"
 import { photoThumbUrl } from "@/lib/file-url"
 import { ItemsTable } from "./items-table"
 
 export default async function AdminItemsPage() {
+  const { db } = await adminPageContext()
   const items = await db.item.findMany({
     orderBy: { createdAt: "desc" },
     include: { category: { select: { name: true } }, photos: { orderBy: { sortOrder: "asc" }, take: 1 } },

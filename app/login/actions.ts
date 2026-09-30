@@ -1,6 +1,6 @@
 "use server"
 
-import { AuthError } from "next-auth"
+import { AuthError, CredentialsSignin } from "next-auth"
 import { signIn } from "@/auth"
 
 export async function login(_prev: string | null, form: FormData): Promise<string | null> {
@@ -12,6 +12,9 @@ export async function login(_prev: string | null, form: FormData): Promise<strin
     })
     return null
   } catch (err) {
+    if (err instanceof CredentialsSignin && err.code === "rate_limited") {
+      return "Muitas tentativas. Aguarde 15 minutos e tente de novo."
+    }
     if (err instanceof AuthError) return "E-mail ou senha incorretos."
     throw err // o redirect do login bem-sucedido chega aqui como exceção
   }

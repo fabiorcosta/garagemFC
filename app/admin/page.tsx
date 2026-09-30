@@ -3,11 +3,12 @@ import { Pencil, Plus } from "lucide-react"
 import { StatusBadge } from "@/components/item-badges"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { db } from "@/lib/db"
+import { adminPageContext } from "@/lib/admin-auth"
 import { formatPrice } from "@/lib/format"
 import { getStatusCounts } from "@/lib/queries"
 
 export default async function DashboardPage() {
+  const { db } = await adminPageContext()
   const [counts, unread, latestItems, latestMessages] = await Promise.all([
     getStatusCounts(),
     db.contactMessage.count({ where: { read: false } }),

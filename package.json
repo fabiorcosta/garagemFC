@@ -5,12 +5,13 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "npm run db:deploy && next start",
+    "start": "npm run db:deploy && exec env -u MIGRATE_DATABASE_URL -u APP_DB_PASSWORD_PUBLIC -u APP_DB_PASSWORD_ADMIN -u ADMIN_PASSWORD_HASH -u SEED_ADMIN_PASSWORD next start",
     "lint": "eslint",
     "db:push": "prisma db push",
-    "db:seed": "prisma db seed",
+    "db:seed": "tsx --env-file=.env scripts/seed.ts",
     "postinstall": "prisma generate",
-    "db:deploy": "prisma db push --skip-generate && tsx scripts/seed.ts"
+    "db:deploy": "prisma db push --skip-generate && tsx scripts/db-security.ts && tsx scripts/seed.ts",
+    "admin:hash": "tsx scripts/admin-password.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1141.0",
@@ -45,7 +46,7 @@
     "tailwindcss": "^4",
     "typescript": "^5"
   },
-  "prisma": {
-    "seed": "tsx --env-file=.env scripts/seed.ts"
+  "overrides": {
+    "deepmerge-ts": "^8.0.2"
   }
 }

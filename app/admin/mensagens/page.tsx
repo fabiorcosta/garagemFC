@@ -1,8 +1,9 @@
-import { db } from "@/lib/db"
+import { adminPageContext } from "@/lib/admin-auth"
 import { getSettings } from "@/lib/queries"
 import { MessagesList } from "./messages-list"
 
 export default async function MessagesPage() {
+  const { db } = await adminPageContext()
   const settings = await getSettings()
   const messages = await db.contactMessage.findMany({
     orderBy: { createdAt: "desc" },

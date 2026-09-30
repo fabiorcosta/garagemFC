@@ -64,8 +64,14 @@ export function ItemForm({
     if (values.price === "" || Number(values.price) < 0) return toast.error("Informe o preço")
     setSaving(true)
     try {
+      // Campos explícitos: o servidor rejeita qualquer campo a mais (schema estrito)
       const body = {
-        ...values,
+        title: values.title,
+        description: values.description,
+        condition: values.condition,
+        status: values.status,
+        acceptsOffers: values.acceptsOffers,
+        featured: values.featured,
         price: Number(values.price),
         originalPrice: values.originalPrice === "" ? null : Number(values.originalPrice),
         categoryId: values.categoryId || null,

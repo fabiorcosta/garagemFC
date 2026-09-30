@@ -1,8 +1,9 @@
-import { db } from "@/lib/db"
+import { adminPageContext } from "@/lib/admin-auth"
 import { getSettings } from "@/lib/queries"
 import { ItemForm } from "../item-form"
 
 export default async function NewItemPage() {
+  const { db } = await adminPageContext()
   const categories = await db.category.findMany({ orderBy: [{ sortOrder: "asc" }, { name: "asc" }], select: { id: true, name: true } })
   return (
     <div className="flex flex-col gap-6">

@@ -5,7 +5,7 @@ import { PackageSearch } from "lucide-react"
 import { ItemCard, ItemGrid } from "@/components/item-card"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { getCatalog, getCategoriesWithCounts, getSettings } from "@/lib/queries"
+import { getCatalog, getCategoriesWithCounts, getSettings, parseCatalogFilters } from "@/lib/queries"
 import { FilterBar } from "./filter-bar"
 
 export const dynamic = "force-dynamic"
@@ -14,19 +14,8 @@ export const metadata: Metadata = {
   title: "Catálogo",
 }
 
-function str(v: string | string[] | undefined) {
-  return (Array.isArray(v) ? v[0] : v)?.trim() || undefined
-}
-
 export default async function CatalogPage(props: PageProps<"/itens">) {
-  const sp = await props.searchParams
-  const filters = {
-    q: str(sp.q)?.slice(0, 100),
-    cat: str(sp.cat),
-    preco: str(sp.preco),
-    status: str(sp.status),
-    page: Number(str(sp.page)) || 1,
-  }
+  const filters = parseCatalogFilters(await props.searchParams)
   const [settings, categories, { items, total, page, totalPages }] = await Promise.all([
     getSettings(),
     getCategoriesWithCounts(),

@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next"
+import { headers } from "next/headers"
 import { Inter } from "next/font/google"
 import { Toaster } from "@/components/ui/sonner"
 import { Analytics } from "@/components/analytics"
@@ -18,13 +19,15 @@ export const viewport: Viewport = {
   themeColor: "#FBF6EE",
 }
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // Nonce da CSP (gerado no proxy.ts a cada requisição)
+  const nonce = (await headers()).get("x-nonce") ?? undefined
   return (
     <html lang="pt-BR" className={`${inter.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col bg-background">
         {children}
         <Toaster position="top-center" richColors />
-        <Analytics />
+        <Analytics nonce={nonce} />
       </body>
     </html>
   )
