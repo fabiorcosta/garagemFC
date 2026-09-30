@@ -16,6 +16,9 @@ export function getS3Client() {
     client = new S3Client({
       region: s3Config.region,
       endpoint: s3Config.endpoint,
+      // Sem isso o SDK assina um checksum na URL de envio que o R2 rejeita no PUT feito pelo navegador.
+      requestChecksumCalculation: "WHEN_REQUIRED",
+      responseChecksumValidation: "WHEN_REQUIRED",
       credentials: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? "",
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? "",
