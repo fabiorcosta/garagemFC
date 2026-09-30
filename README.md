@@ -7,14 +7,14 @@ Vitrine online para vender os itens da casa antes da mudança. Next.js 16 + Pris
 ```bash
 cp .env.example .env        # preencha as URLs dos papéis, senhas, AUTH_SECRET e SEED_ADMIN_*
 npm install
-npm run db:push             # cria as tabelas
-npm run db:seed             # admin + 6 categorias + 12 itens de exemplo + configurações
+set -a; . ./.env; set +a    # carrega as variáveis no terminal
+npm run db:deploy           # tabelas + tranca de segurança + seed (SEED_SAMPLE_ITEMS=true cria 12 exemplos)
 npm run dev
 ```
 
 - Site: http://localhost:3000 · Admin: http://localhost:3000/login
 - Sem `S3_BUCKET`, as fotos ficam em `.uploads/` (só para desenvolvimento).
-- O seed só cria itens de exemplo se o banco estiver vazio. Rodar de novo atualiza a senha do admin.
+- O seed só cria categorias e itens de exemplo num banco vazio, e nunca sobrescreve a senha (só `ADMIN_PASSWORD_HASH` troca).
 - Não existe cadastro público: o admin é criado apenas pelo seed.
 
 ## Segurança (resumo)
