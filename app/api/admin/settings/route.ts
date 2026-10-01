@@ -23,7 +23,7 @@ const schema = z.strictObject({
   showCountdown: z.boolean().default(true),
   showStats: z.boolean().default(true),
   texts: z
-    .record(z.string().max(40), z.string().max(2000))
+    .record(z.string().max(40), z.string().max(5000))
     .refine((o) => Object.keys(o).length <= 100, "Textos demais")
     .default({}),
 })

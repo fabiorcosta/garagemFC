@@ -30,10 +30,13 @@ export function SiteHeader({ title, announcement }: { title: string; announcemen
   )
 }
 
-export function SiteFooter({ text }: { text: string }) {
+export function SiteFooter({ text, privacyLabel }: { text: string; privacyLabel: string }) {
   return (
-    <footer className="mt-16 border-t py-8 text-center text-xs text-muted-foreground">
+    <footer className="mt-16 flex flex-col gap-2 border-t py-8 text-center text-xs text-muted-foreground">
       <p className="px-4">{text}</p>
+      <Link href="/privacidade" className="underline underline-offset-2 hover:text-primary">
+        {privacyLabel}
+      </Link>
     </footer>
   )
 }

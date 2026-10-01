@@ -11,6 +11,7 @@ export const TEXT_GROUPS = {
   retirada: "Página de retirada",
   whatsapp: "Mensagens do WhatsApp",
   geral: "Rodapé e Google",
+  privacidade: "Privacidade e cookies",
 } as const
 export type TextGroup = keyof typeof TEXT_GROUPS
 
@@ -62,6 +63,33 @@ export const TEXTS = {
   // Rodapé e Google
   footerText: { group: "geral", label: "Texto do rodapé", default: "{site} · venda de mudança · pagamento e retirada combinados pelo WhatsApp", max: 200, hint: "{site} = título do site" },
   conditions: { group: "geral", label: "Opções de condição dos itens (uma por linha)", default: "Novo\nSeminovo\nÓtimo estado\nBom estado\nCom marcas de uso\nPrecisa de reparo", max: 600, multiline: true, hint: "Aparecem na lista ao cadastrar um item" },
+  cookieText: { group: "privacidade", label: "Aviso de cookies", default: "Usamos cookies de estatística (Google Analytics) para saber quais itens interessam mais. Você escolhe se permite.", max: 300, multiline: true },
+  cookieAccept: { group: "privacidade", label: "Botão aceitar", default: "Aceitar", max: 30 },
+  cookieReject: { group: "privacidade", label: "Botão recusar", default: "Recusar", max: 30 },
+  cookieMore: { group: "privacidade", label: "Link para a política", default: "Saiba mais", max: 40 },
+  privacyTitle: { group: "privacidade", label: "Título da página de privacidade", default: "Privacidade e cookies", max: 60 },
+  privacyBody: {
+    group: "privacidade",
+    label: "Texto da página de privacidade",
+    multiline: true,
+    max: 5000,
+    hint: "{site} = nome do site",
+    default: [
+      "O {site} é um site pessoal para vender os itens de uma casa por motivo de mudança. Não há cadastro de compradores nem pagamento pelo site.",
+      "",
+      "O que coletamos",
+      "• Formulário \"Tenho interesse\": nome, telefone e/ou e-mail e a mensagem. Usados só para responder sobre o item, guardados apenas durante o período da venda e nunca vendidos ou repassados.",
+      "• Estatísticas de visita (Google Analytics): só se você clicar em \"Aceitar\" no aviso de cookies. Mostram quais páginas e itens foram vistos. Não usamos esses dados para anúncios personalizados.",
+      "",
+      "WhatsApp",
+      "Ao clicar no botão do WhatsApp, a conversa acontece no aplicativo do WhatsApp, sob as regras dele.",
+      "",
+      "Seus direitos (LGPD)",
+      "Você pode pedir a qualquer momento para ver, corrigir ou apagar seus dados, pelo mesmo WhatsApp ou e-mail usado no contato.",
+    ].join("\n"),
+  },
+  privacyChangeButton: { group: "privacidade", label: "Botão para mudar a escolha", default: "Mudar minha escolha de cookies", max: 50 },
+  footerPrivacyLink: { group: "privacidade", label: "Link no rodapé", default: "Privacidade e cookies", max: 40 },
   seoDescription: { group: "geral", label: "Descrição no Google e no WhatsApp", default: "Venda de móveis, eletrônicos e eletrodomésticos por mudança. Retirada no local.", max: 200, multiline: true },
 } satisfies Record<string, TextDef>
 

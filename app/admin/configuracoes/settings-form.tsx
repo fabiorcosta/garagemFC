@@ -100,6 +100,7 @@ const TABS: { id: string; label: string; blocks: Block[] }[] = [
       { kind: "texts", title: TEXT_GROUPS.catalogo, group: "catalogo" },
       { kind: "texts", title: TEXT_GROUPS.item, group: "item" },
       { kind: "texts", title: TEXT_GROUPS.geral, group: "geral" },
+      { kind: "texts", title: TEXT_GROUPS.privacidade, group: "privacidade" },
     ],
   },
 ]
