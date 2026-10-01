@@ -20,6 +20,8 @@ export type ItemFormValues = {
   price: number | ""
   originalPrice: number | ""
   referenceUrl: string
+  dimensions: string
+  published: boolean
   condition: string
   status: string
   acceptsOffers: boolean
@@ -72,6 +74,8 @@ export function ItemForm({
         condition: values.condition,
         status: values.status,
         acceptsOffers: values.acceptsOffers,
+        dimensions: values.dimensions.trim(),
+        published: values.published,
         featured: values.featured,
         referenceUrl: values.referenceUrl.trim(),
         price: Number(values.price),
@@ -83,7 +87,7 @@ export function ItemForm({
       }
       if (values.id) await adminFetch(`/api/admin/items/${values.id}`, "PUT", body)
       else await adminFetch("/api/admin/items", "POST", body)
-      toast.success(values.id ? "Item atualizado" : "Item cadastrado")
+      toast.success(!values.published ? "Rascunho salvo (não aparece no site)" : values.id ? "Item atualizado" : "Item publicado")
       router.push("/admin/itens")
       router.refresh()
     } catch (err) {
@@ -147,6 +151,18 @@ export function ItemForm({
             Página do mesmo produto novo numa loja, para o comprador comparar o preço. Só links https://.
           </p>
         </div>
+        <div className="grid gap-1.5 sm:col-span-2">
+          <Label htmlFor="dimensions">Medidas (opcional)</Label>
+          <Input
+            id="dimensions"
+            maxLength={80}
+            placeholder="Ex.: 180 × 90 × 75 cm (L × P × A)"
+            value={values.dimensions}
+            onChange={(e) => set("dimensions", e.target.value)}
+            className="h-10"
+          />
+          <p className="text-xs text-muted-foreground">É a primeira pergunta em móveis e eletrodomésticos: &quot;cabe na minha casa?&quot;</p>
+        </div>
         <div className="grid gap-1.5">
           <Label htmlFor="condition">Condição</Label>
           <select id="condition" value={values.condition} onChange={(e) => set("condition", e.target.value)} className={selectCls}>
@@ -184,9 +200,20 @@ export function ItemForm({
             maxLength={5000}
             value={values.description}
             onChange={(e) => set("description", e.target.value)}
-            placeholder="Medidas, marca, tempo de uso, defeitos…"
+            placeholder="Marca, modelo, tempo de uso, defeitos…"
           />
         </div>
+        <label
+          className={`flex items-center justify-between gap-3 rounded-xl border p-3 sm:col-span-2 ${values.published ? "" : "border-amber bg-amber-soft"}`}
+        >
+          <span>
+            <span className="block text-sm font-semibold">{values.published ? "Visível no site" : "Rascunho (escondido do site)"}</span>
+            <span className="text-xs text-muted-foreground">
+              Desligue para preparar o item com calma; ninguém vê até você ligar de novo.
+            </span>
+          </span>
+          <Switch checked={values.published} onCheckedChange={(v) => set("published", v)} />
+        </label>
         <label className="flex items-center justify-between gap-3 rounded-xl border p-3">
           <span>
             <span className="block text-sm font-semibold">Aceito ofertas</span>
@@ -209,7 +236,7 @@ export function ItemForm({
         </Button>
         <Button type="submit" disabled={saving || uploading} className="h-11 rounded-full px-6 text-base font-semibold shadow-lg">
           {(saving || uploading) && <Loader2 className="animate-spin" />}
-          {uploading ? "Enviando fotos…" : values.id ? "Salvar alterações" : "Cadastrar item"}
+          {uploading ? "Enviando fotos…" : !values.published ? "Salvar rascunho" : values.id ? "Salvar alterações" : "Publicar item"}
         </Button>
       </div>
     </form>

@@ -2,12 +2,14 @@
 
 import { useRef, useState } from "react"
 import Image from "next/image"
-import { ChevronLeft, ChevronRight, ImageOff } from "lucide-react"
+import { ChevronLeft, ChevronRight, Expand, ImageOff } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Lightbox } from "./lightbox"
 
 export function Gallery({ photos, title, sold }: { photos: string[]; title: string; sold: boolean }) {
   const track = useRef<HTMLDivElement>(null)
   const [index, setIndex] = useState(0)
+  const [viewer, setViewer] = useState<number | null>(null)
 
   function go(i: number) {
     const el = track.current
@@ -37,7 +39,13 @@ export function Gallery({ photos, title, sold }: { photos: string[]; title: stri
           className="flex aspect-square snap-x snap-mandatory overflow-x-auto [scrollbar-width:none]"
         >
           {photos.map((src, i) => (
-            <div key={src} className="relative aspect-square w-full shrink-0 snap-center">
+            <button
+              key={src}
+              type="button"
+              onClick={() => setViewer(i)}
+              aria-label={`Ampliar foto ${i + 1}`}
+              className="relative aspect-square w-full shrink-0 cursor-zoom-in snap-center"
+            >
               <Image
                 src={src}
                 alt={`${title} — foto ${i + 1}`}
@@ -46,10 +54,17 @@ export function Gallery({ photos, title, sold }: { photos: string[]; title: stri
                 className={cn("object-contain", sold && "grayscale")}
                 priority={i === 0}
               />
-            </div>
+            </button>
           ))}
         </div>
         {sold && <SoldStamp />}
+        <button
+          type="button"
+          onClick={() => setViewer(index)}
+          className="absolute top-3 right-3 flex items-center gap-1.5 rounded-full bg-black/45 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur"
+        >
+          <Expand className="size-3.5" aria-hidden /> Ampliar
+        </button>
         {photos.length > 1 && (
           <>
             <NavButton side="left" disabled={index === 0} onClick={() => go(index - 1)} />
@@ -80,6 +95,7 @@ export function Gallery({ photos, title, sold }: { photos: string[]; title: stri
           ))}
         </div>
       )}
+      {viewer !== null && <Lightbox photos={photos} title={title} start={viewer} onClose={() => setViewer(null)} />}
     </div>
   )
 }

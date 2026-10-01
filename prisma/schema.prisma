@@ -40,6 +40,10 @@ model Item {
   /// Link do produto novo (referência de preço). Só https, validado no servidor.
   referenceUrl  String?
   condition     String           @default("Bom estado")
+  /// Medidas em texto livre (ex.: "180 x 90 x 75 cm")
+  dimensions    String?
+  /// false = rascunho: invisível ao público (garantido também por RLS no papel garagem_public)
+  published     Boolean          @default(true)
   // "disponivel" | "reservado" | "vendido"
   status        String           @default("disponivel")
   acceptsOffers Boolean          @default(false)
@@ -53,6 +57,7 @@ model Item {
 
   @@index([status])
   @@index([categoryId])
+  @@index([published])
 }
 
 model ItemPhoto {

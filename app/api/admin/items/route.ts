@@ -19,7 +19,7 @@ export const POST = adminRoute(async (req, _ctx, { transaction }) => {
     const item = await transaction(async (tx) => {
       await assertCategory(tx, data.categoryId)
       const created = await tx.item.create({
-        data: { ...data, originalPrice: data.originalPrice || null, referenceUrl: data.referenceUrl || null, slug: await uniqueSlug(tx, data.title) },
+        data: { ...data, originalPrice: data.originalPrice || null, referenceUrl: data.referenceUrl || null, dimensions: data.dimensions || null, slug: await uniqueSlug(tx, data.title) },
         select: itemPublicFields,
       })
       await syncPhotos(tx, created.id, photos)

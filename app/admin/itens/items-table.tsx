@@ -4,7 +4,7 @@ import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ExternalLink, ImageOff, Pencil, Star, Trash2 } from "lucide-react"
+import { Copy, Eye, EyeOff, ExternalLink, ImageOff, Pencil, Star, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { ConfirmDialog } from "@/components/admin/confirm-dialog"
 import { cn } from "@/lib/utils"
@@ -20,6 +20,8 @@ type Row = {
   category: string | null
   thumb: string | null
   featured: boolean
+  published: boolean
+  photoCount: number
 }
 
 const statusBtn: Record<ItemStatus, string> = {
@@ -30,9 +32,10 @@ const statusBtn: Record<ItemStatus, string> = {
 
 export function ItemsTable({ rows }: { rows: Row[] }) {
   const router = useRouter()
-  const [filter, setFilter] = useState<"" | ItemStatus>("")
+  const [filter, setFilter] = useState<"" | ItemStatus | "rascunho">("")
   const [busy, setBusy] = useState<string | null>(null)
-  const visible = filter ? rows.filter((r) => r.status === filter) : rows
+  const matches = (r: Row, f: typeof filter) => (f === "rascunho" ? !r.published : f ? r.status === f : true)
+  const visible = rows.filter((r) => matches(r, filter))
 
   async function setStatus(id: string, status: ItemStatus) {
     setBusy(id)
@@ -43,6 +46,31 @@ export function ItemsTable({ rows }: { rows: Row[] }) {
     } catch (e) {
       toast.error((e as Error).message)
     } finally {
+      setBusy(null)
+    }
+  }
+
+  async function setPublished(id: string, published: boolean) {
+    setBusy(id)
+    try {
+      await adminFetch(`/api/admin/items/${id}`, "PUT", { published })
+      toast.success(published ? "Publicado: já aparece no site" : "Virou rascunho: saiu do site")
+      router.refresh()
+    } catch (e) {
+      toast.error((e as Error).message)
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  async function duplicate(id: string) {
+    setBusy(id)
+    try {
+      const copy = await adminFetch<{ id: string }>(`/api/admin/items/${id}/duplicate`, "POST")
+      toast.success("Cópia criada como rascunho — agora adicione as fotos")
+      router.push(`/admin/itens/${copy.id}`)
+    } catch (e) {
+      toast.error((e as Error).message)
       setBusy(null)
     }
   }
@@ -63,7 +91,7 @@ export function ItemsTable({ rows }: { rows: Row[] }) {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex gap-2 overflow-x-auto">
-        {(["", ...STATUSES] as const).map((s) => (
+        {(["", ...STATUSES, "rascunho"] as const).map((s) => (
           <button
             key={s || "all"}
             onClick={() => setFilter(s)}
@@ -72,7 +100,7 @@ export function ItemsTable({ rows }: { rows: Row[] }) {
               filter === s ? "border-primary bg-primary text-primary-foreground" : "bg-card",
             )}
           >
-            {s ? STATUS_LABEL[s] : "Todos"} ({s ? rows.filter((r) => r.status === s).length : rows.length})
+            {s === "rascunho" ? "Rascunhos" : s ? STATUS_LABEL[s] : "Todos"} ({rows.filter((r) => matches(r, s)).length})
           </button>
         ))}
       </div>
@@ -97,9 +125,15 @@ export function ItemsTable({ rows }: { rows: Row[] }) {
                   {r.featured && <Star className="mr-1 inline size-3.5 fill-amber text-amber" aria-label="Destaque" />}
                   {r.title}
                 </Link>
-                <p className="text-xs text-muted-foreground">
+                <p className="flex flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground">
+                  {!r.published && (
+                    <span className="rounded-full bg-amber px-2 py-0.5 text-[10px] font-bold text-[#3D2A06] uppercase">Rascunho</span>
+                  )}
                   <span className="font-semibold text-foreground">{formatPrice(r.price)}</span>
-                  {r.category && ` · ${r.category}`}
+                  {r.category && <span>· {r.category}</span>}
+                  <span className={r.photoCount === 0 ? "font-semibold text-destructive" : ""}>
+                    · {r.photoCount} {r.photoCount === 1 ? "foto" : "fotos"}
+                  </span>
                 </p>
               </div>
             </div>
@@ -122,9 +156,29 @@ export function ItemsTable({ rows }: { rows: Row[] }) {
                 ))}
               </div>
               <div className="ml-auto flex">
-                <Link href={`/itens/${r.slug}`} target="_blank" className="rounded-full p-2 hover:bg-muted" aria-label="Ver no site">
-                  <ExternalLink className="size-4" />
-                </Link>
+                <button
+                  onClick={() => setPublished(r.id, !r.published)}
+                  disabled={busy === r.id}
+                  className="rounded-full p-2 hover:bg-muted"
+                  aria-label={r.published ? "Esconder do site (virar rascunho)" : "Publicar no site"}
+                  title={r.published ? "Esconder do site (virar rascunho)" : "Publicar no site"}
+                >
+                  {r.published ? <Eye className="size-4" /> : <EyeOff className="size-4 text-amber" />}
+                </button>
+                <button
+                  onClick={() => duplicate(r.id)}
+                  disabled={busy === r.id}
+                  className="rounded-full p-2 hover:bg-muted"
+                  aria-label="Duplicar"
+                  title="Duplicar (cria um rascunho sem fotos)"
+                >
+                  <Copy className="size-4" />
+                </button>
+                {r.published && (
+                  <Link href={`/itens/${r.slug}`} target="_blank" className="rounded-full p-2 hover:bg-muted" aria-label="Ver no site">
+                    <ExternalLink className="size-4" />
+                  </Link>
+                )}
                 <Link href={`/admin/itens/${r.id}`} className="rounded-full p-2 hover:bg-muted" aria-label="Editar">
                   <Pencil className="size-4" />
                 </Link>

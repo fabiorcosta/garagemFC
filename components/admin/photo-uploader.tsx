@@ -3,8 +3,10 @@
 import { useRef, useState } from "react"
 import imageCompression from "browser-image-compression"
 import { AlertCircle, ArrowLeft, ArrowRight, ImagePlus, Loader2, Star, X } from "lucide-react"
+import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { adminFetch } from "@/lib/admin-fetch"
+import { MAX_PHOTOS } from "@/lib/validators"
 
 export type UploadedPhoto = {
   /** id do ItemPhoto já salvo (ausente em fotos novas) */
@@ -86,7 +88,11 @@ export function PhotoUploader({
 
   function addFiles(files: FileList | File[]) {
     const images = Array.from(files).filter((f) => f.type.startsWith("image/"))
-    images.forEach(processFile)
+    const free = MAX_PHOTOS - photos.length
+    if (images.length > free) {
+      toast.error(free > 0 ? `Cabem só mais ${free} foto(s) — máximo de ${MAX_PHOTOS} por item.` : `Máximo de ${MAX_PHOTOS} fotos por item.`)
+    }
+    images.slice(0, Math.max(0, free)).forEach(processFile)
   }
 
   function move(index: number, to: number) {
@@ -100,6 +106,14 @@ export function PhotoUploader({
 
   return (
     <div className="flex flex-col gap-3">
+      <p className="text-sm text-muted-foreground">
+        <strong className="text-foreground">
+          {photos.length}/{MAX_PHOTOS} fotos.
+        </strong>{" "}
+        A 1ª foto é a <strong className="text-foreground">capa</strong>: aparece no catálogo e na prévia do WhatsApp. Boas fotos: vista
+        geral, detalhes, etiqueta/marca e eventuais defeitos.
+      </p>
+      {photos.length < MAX_PHOTOS && (
       <div
         onDragOver={(e) => {
           e.preventDefault()
@@ -132,16 +146,17 @@ export function PhotoUploader({
           }}
         />
       </div>
+      )}
 
       {photos.length > 0 && (
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {photos.map((p, i) => (
-            <li key={p.localId} className="relative overflow-hidden rounded-xl border bg-muted">
+            <li key={p.localId} className={cn("relative overflow-hidden rounded-xl border bg-muted", i === 0 && "ring-2 ring-primary")}>
               {/* eslint-disable-next-line @next/next/no-img-element -- prévia local (blob:) */}
               <img src={p.preview} alt="" className="aspect-square w-full object-cover" />
               {i === 0 && p.state === "done" && (
                 <span className="absolute top-1.5 left-1.5 flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-primary-foreground">
-                  <Star className="size-3 fill-current" /> Principal
+                  <Star className="size-3 fill-current" /> Capa
                 </span>
               )}
               {(p.state === "compressing" || p.state === "uploading") && (
@@ -168,14 +183,20 @@ export function PhotoUploader({
                 <X className="size-3.5" />
               </button>
               {p.state === "done" && photos.length > 1 && (
-                <div className="absolute inset-x-1.5 bottom-1.5 flex justify-between">
+                <div className="flex items-center gap-1 border-t bg-card p-1.5">
                   <IconBtn label="Mover para a esquerda" disabled={i === 0} onClick={() => move(i, i - 1)}>
                     <ArrowLeft className="size-3.5" />
                   </IconBtn>
-                  {i !== 0 && (
-                    <IconBtn label="Tornar principal" onClick={() => move(i, 0)}>
-                      <Star className="size-3.5" />
-                    </IconBtn>
+                  {i === 0 ? (
+                    <span className="flex-1 text-center text-[11px] font-semibold text-primary">Foto de capa</span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => move(i, 0)}
+                      className="flex-1 rounded-full border border-primary/40 px-2 py-1 text-[11px] font-semibold text-primary hover:bg-terracotta-soft"
+                    >
+                      Usar como capa
+                    </button>
                   )}
                   <IconBtn label="Mover para a direita" disabled={i === photos.length - 1} onClick={() => move(i, i + 1)}>
                     <ArrowRight className="size-3.5" />
@@ -208,7 +229,7 @@ function IconBtn({
       title={label}
       disabled={disabled}
       onClick={onClick}
-      className="rounded-full bg-white/90 p-1.5 shadow disabled:invisible"
+      className="rounded-full p-1.5 hover:bg-muted disabled:invisible"
     >
       {children}
     </button>

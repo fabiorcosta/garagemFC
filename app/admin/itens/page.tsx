@@ -10,7 +10,11 @@ export default async function AdminItemsPage() {
   const { db } = await adminPageContext()
   const items = await db.item.findMany({
     orderBy: { createdAt: "desc" },
-    include: { category: { select: { name: true } }, photos: { orderBy: { sortOrder: "asc" }, take: 1 } },
+    include: {
+      category: { select: { name: true } },
+      photos: { orderBy: { sortOrder: "asc" }, take: 1 },
+      _count: { select: { photos: true } },
+    },
   })
   const rows = items.map((i) => ({
     id: i.id,
@@ -21,6 +25,8 @@ export default async function AdminItemsPage() {
     category: i.category?.name ?? null,
     thumb: photoThumbUrl(i.photos[0]),
     featured: i.featured,
+    published: i.published,
+    photoCount: i._count.photos,
   }))
 
   return (

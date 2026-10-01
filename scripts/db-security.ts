@@ -77,8 +77,11 @@ const statements: string[] = [
     `ALTER TABLE "${t}" ENABLE ROW LEVEL SECURITY`,
     `ALTER TABLE "${t}" FORCE ROW LEVEL SECURITY`,
   ]),
-  ...["Category", "Item", "SiteSettings"].map((t) => `CREATE POLICY gar_public_read ON "${t}" FOR SELECT TO garagem_public USING (true)`),
-  `CREATE POLICY gar_public_read ON "ItemPhoto" FOR SELECT TO garagem_public USING ("isPublic" = true)`,
+  ...["Category", "SiteSettings"].map((t) => `CREATE POLICY gar_public_read ON "${t}" FOR SELECT TO garagem_public USING (true)`),
+  // Rascunhos (published = false) e suas fotos nunca chegam ao visitante, mesmo que uma consulta esqueça o filtro
+  `CREATE POLICY gar_public_read ON "Item" FOR SELECT TO garagem_public USING ("published" = true)`,
+  `CREATE POLICY gar_public_read ON "ItemPhoto" FOR SELECT TO garagem_public
+     USING ("isPublic" = true AND EXISTS (SELECT 1 FROM "Item" i WHERE i.id = "ItemPhoto"."itemId" AND i."published" = true))`,
   `CREATE POLICY gar_public_insert ON "ContactMessage" FOR INSERT TO garagem_public WITH CHECK ("read" = false)`,
   ...BUSINESS.map((t) => `CREATE POLICY gar_admin_all ON "${t}" FOR ALL TO garagem_admin USING (true) WITH CHECK (true)`),
 

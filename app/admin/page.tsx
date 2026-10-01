@@ -9,8 +9,9 @@ import { getStatusCounts } from "@/lib/queries"
 
 export default async function DashboardPage() {
   const { db } = await adminPageContext()
-  const [counts, unread, latestItems, latestMessages] = await Promise.all([
-    getStatusCounts(),
+  const [counts, drafts, unread, latestItems, latestMessages] = await Promise.all([
+    getStatusCounts(), // contagem pública: só itens publicados
+    db.item.count({ where: { published: false } }),
     db.contactMessage.count({ where: { read: false } }),
     db.item.findMany({ orderBy: { createdAt: "desc" }, take: 5 }),
     db.contactMessage.findMany({
@@ -31,12 +32,13 @@ export default async function DashboardPage() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-        <Metric label="Total de itens" value={total} />
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-6">
+        <Metric label="Publicados" value={total} />
+        <Metric label="Rascunhos" value={drafts} href="/admin/itens" className="bg-amber-soft text-[#8A5A0B]" />
         <Metric label="Disponíveis" value={counts.disponivel} className="bg-olive-soft text-olive" />
         <Metric label="Reservados" value={counts.reservado} className="bg-amber-soft text-[#8A5A0B]" />
         <Metric label="Vendidos" value={counts.vendido} className="bg-terracotta-soft text-primary" />
-        <Metric label="Mensagens novas" value={unread} href="/admin/mensagens" className="col-span-2 sm:col-span-1" />
+        <Metric label="Mensagens novas" value={unread} href="/admin/mensagens" />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">

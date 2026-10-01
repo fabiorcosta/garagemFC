@@ -4,7 +4,7 @@ import { z } from "zod"
 import { idSchema } from "./api"
 import type { AdminDb } from "./db"
 import { slugify, STATUSES } from "./format"
-import { referenceUrlSchema } from "./validators"
+import { MAX_PHOTOS, referenceUrlSchema } from "./validators"
 import { deleteFile, isValidKey } from "./s3"
 
 const price = z.coerce.number({ message: "Preço inválido" }).min(0, "Preço inválido").max(1_000_000, "Preço alto demais")
@@ -22,11 +22,13 @@ export const itemSchema = z.strictObject({
   originalPrice: price.nullable().optional(),
   referenceUrl: referenceUrlSchema.default(""),
   condition: z.string().trim().min(1).max(40).default("Bom estado"),
+  dimensions: z.string().trim().max(80, "Medidas: no máximo 80 caracteres").default(""),
+  published: z.boolean().default(true),
   status: z.enum(STATUSES).default("disponivel"),
   acceptsOffers: z.boolean().default(false),
   featured: z.boolean().default(false),
   categoryId: idSchema.nullable().optional(),
-  photos: z.array(photoSchema).max(20).default([]),
+  photos: z.array(photoSchema).max(MAX_PHOTOS, `No máximo ${MAX_PHOTOS} fotos por item`).default([]),
 })
 
 export const categorySchema = z.strictObject({
@@ -34,10 +36,13 @@ export const categorySchema = z.strictObject({
   sortOrder: z.coerce.number().int().min(0).max(999).default(0),
 })
 
-export const statusOnlySchema = z.strictObject({ status: z.enum(STATUSES) })
+/** Ação rápida da tabela: muda só o status e/ou a publicação. */
+export const quickUpdateSchema = z
+  .strictObject({ status: z.enum(STATUSES).optional(), published: z.boolean().optional() })
+  .refine((d) => d.status !== undefined || d.published !== undefined, "Nada para alterar")
 
 /** Campos que as rotas devolvem ao navegador (nada além disso). */
-export const itemPublicFields = { id: true, slug: true, title: true, status: true } satisfies Prisma.ItemSelect
+export const itemPublicFields = { id: true, slug: true, title: true, status: true, published: true } satisfies Prisma.ItemSelect
 
 type Tx = Prisma.TransactionClient
 

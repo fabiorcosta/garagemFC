@@ -5,7 +5,7 @@ import {
   deletePhotoFiles,
   itemPublicFields,
   itemSchema,
-  statusOnlySchema,
+  quickUpdateSchema,
   syncPhotos,
   uniqueSlug,
   ValidationError,
@@ -23,6 +23,8 @@ export const GET = adminRoute<{ id: string }>(async (_req, { params }, { db }) =
       originalPrice: true,
       referenceUrl: true,
       condition: true,
+      dimensions: true,
+      published: true,
       acceptsOffers: true,
       featured: true,
       categoryId: true,
@@ -38,9 +40,9 @@ export const PUT = adminRoute<{ id: string }>(async (req, { params }, { db, tran
   if (!id) return notFound()
   const body = await readJson(req)
 
-  const statusOnly = statusOnlySchema.safeParse(body)
-  if (statusOnly.success) {
-    const updated = await db.item.updateMany({ where: { id }, data: { status: statusOnly.data.status } })
+  const quick = quickUpdateSchema.safeParse(body)
+  if (quick.success) {
+    const updated = await db.item.updateMany({ where: { id }, data: quick.data })
     if (updated.count === 0) return notFound()
     revalidatePublic()
     return NextResponse.json({ ok: true })
@@ -59,7 +61,7 @@ export const PUT = adminRoute<{ id: string }>(async (req, { params }, { db, tran
       const slug = data.title === existing.title ? existing.slug : await uniqueSlug(tx, data.title, id)
       const item = await tx.item.update({
         where: { id },
-        data: { ...data, originalPrice: data.originalPrice || null, referenceUrl: data.referenceUrl || null, slug },
+        data: { ...data, originalPrice: data.originalPrice || null, referenceUrl: data.referenceUrl || null, dimensions: data.dimensions || null, slug },
         select: itemPublicFields,
       })
       const removed = await syncPhotos(tx, id, photos)

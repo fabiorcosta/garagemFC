@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ChevronLeft, ExternalLink, Sparkles } from "lucide-react"
+import { ChevronLeft, ExternalLink, Ruler, Sparkles } from "lucide-react"
 import { OffersBadge, Price, StatusBadge } from "@/components/item-badges"
 import { WhatsAppButton } from "@/components/whatsapp-button"
 import { photoFullUrl } from "@/lib/file-url"
@@ -93,6 +93,15 @@ export default async function ItemPage(props: PageProps<"/itens/[slug]">) {
               </a>
             )}
           </div>
+
+          {item.dimensions && (
+            <p className="flex items-center gap-2 rounded-xl bg-muted px-3 py-2 text-sm">
+              <Ruler className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+              <span>
+                <span className="font-semibold">Medidas:</span> {item.dimensions}
+              </span>
+            </p>
+          )}
 
           {item.description && (
             <p className="text-[15px] leading-relaxed whitespace-pre-line text-foreground/85">{item.description}</p>

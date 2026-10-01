@@ -19,9 +19,13 @@ export default async function EditItemPage(props: PageProps<"/admin/itens/[id]">
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-2xl font-extrabold">Editar item</h1>
-        <Link href={`/itens/${item.slug}`} target="_blank" className="flex items-center gap-1 text-sm font-medium text-primary">
-          Ver no site <ExternalLink className="size-4" />
-        </Link>
+        {item.published ? (
+          <Link href={`/itens/${item.slug}`} target="_blank" className="flex items-center gap-1 text-sm font-medium text-primary">
+            Ver no site <ExternalLink className="size-4" />
+          </Link>
+        ) : (
+          <span className="rounded-full bg-amber px-3 py-1 text-xs font-bold text-[#3D2A06] uppercase">Rascunho</span>
+        )}
       </div>
       <ItemForm
         conditions={(await getSettings()).t.conditions.split("\n").map((c) => c.trim()).filter(Boolean)}
@@ -33,6 +37,8 @@ export default async function EditItemPage(props: PageProps<"/admin/itens/[id]">
           price: item.price,
           originalPrice: item.originalPrice ?? "",
           referenceUrl: item.referenceUrl ?? "",
+          dimensions: item.dimensions ?? "",
+          published: item.published,
           condition: item.condition,
           status: item.status,
           acceptsOffers: item.acceptsOffers,
