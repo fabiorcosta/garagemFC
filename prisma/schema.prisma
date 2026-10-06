@@ -83,6 +83,9 @@ model ContactMessage {
   phone     String?
   message   String
   read      Boolean  @default(false)
+  /// Aceite do aviso "item usado, sem garantia" (data do servidor + impressão digital do texto aceito)
+  disclaimerAcceptedAt DateTime?
+  disclaimerVersion    String?
   createdAt DateTime @default(now())
 
   @@index([read])

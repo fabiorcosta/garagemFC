@@ -19,6 +19,8 @@ type Msg = {
   message: string
   read: boolean
   createdAt: string
+  disclaimerAcceptedAt: string | null
+  disclaimerVersion: string | null
   item: { title: string; slug: string } | null
 }
 
@@ -82,6 +84,11 @@ export function MessagesList({ messages, replyTemplate }: { messages: Msg[]; rep
                   </Link>
                 )}
                 <p className="whitespace-pre-line">{m.message}</p>
+                <p className={m.disclaimerAcceptedAt ? "text-xs text-olive" : "text-xs text-muted-foreground"}>
+                  {m.disclaimerAcceptedAt
+                    ? `✓ Aceitou o aviso "item usado, sem garantia" em ${dateFmt.format(new Date(m.disclaimerAcceptedAt))} (versão ${m.disclaimerVersion})`
+                    : "Mensagem anterior ao aviso de garantia"}
+                </p>
                 <div className="flex flex-wrap gap-2">
                   {m.phone && (
                     <>

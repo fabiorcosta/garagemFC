@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils"
 import { whatsappLink } from "@/lib/format"
 import { track } from "@/lib/gtag"
+import { useDisclaimer } from "./disclaimer"
 
 export function WhatsAppIcon({ className }: { className?: string }) {
   return (
@@ -27,13 +28,27 @@ export function WhatsAppButton({
   itemName?: string
   className?: string
 }) {
+  const disclaimer = useDisclaimer()
   if (!phone) return null
+  const href = whatsappLink(phone, message)
   return (
     <a
-      href={whatsappLink(phone, message)}
+      href={href}
       target="_blank"
       rel="noopener noreferrer"
-      onClick={() => track("contact_whatsapp", itemName ? { item_name: itemName } : {})}
+      onClick={(e) => {
+        if (!disclaimer) {
+          track("contact_whatsapp", itemName ? { item_name: itemName } : {})
+          return
+        }
+        // Aviso de garantia à frente; a conversa só abre depois do "estou ciente",
+        // já com a linha de aceite na mensagem (fica registrada no próprio WhatsApp).
+        e.preventDefault()
+        disclaimer.confirm(() => {
+          track("contact_whatsapp", itemName ? { item_name: itemName } : {})
+          window.open(whatsappLink(phone, `${message}\n\n${disclaimer.texts.whatsappNote}`), "_blank", "noopener,noreferrer")
+        })
+      }}
       className={cn(
         "inline-flex items-center justify-center gap-2 rounded-full bg-[#25D366] font-semibold text-[#08331A] shadow-lg transition hover:brightness-95 active:scale-[0.98]",
         floating ? "fixed right-4 bottom-4 z-40 h-14 px-5 text-base sm:right-6 sm:bottom-6" : "h-11 px-5 text-sm",

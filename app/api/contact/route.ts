@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
 import { publicDb, rateLimitHit } from "@/lib/db"
+import { disclaimerVersion as disclaimerVersionOf } from "@/lib/disclaimer"
+import { getSettings } from "@/lib/queries"
 import { badRequest, forbidden, idSchema, readJson, tooMany } from "@/lib/api"
 import { clientIp, isSameOrigin, rlKey } from "@/lib/security"
 
@@ -17,6 +19,8 @@ const schema = z
       .optional(),
     message: z.string().trim().min(1, "Escreva uma mensagem").max(1000),
     website: z.string().max(200).optional(), // campo-isca
+    disclaimerAccepted: z.literal(true, { message: "É preciso confirmar o aviso sobre a garantia" }),
+    disclaimerVersion: z.string().regex(/^[0-9a-f]{12}$/, "Aviso inválido"),
   })
   .refine((d) => d.email || d.phone, { message: "Informe um telefone ou e-mail" })
 
@@ -31,10 +35,18 @@ export async function POST(req: Request) {
 
   const parsed = schema.safeParse(await readJson(req))
   if (!parsed.success) return badRequest(parsed.error.issues[0]?.message ?? "Dados inválidos")
-  const { website, itemId, ...data } = parsed.data
+  // disclaimerAccepted já foi exigido como `true` pelo schema; não vai para o banco
+  const { website, itemId, disclaimerAccepted, disclaimerVersion, ...data } = parsed.data
+  void disclaimerAccepted
 
   // Robô preencheu o campo escondido: finge sucesso e descarta.
   if (website) return NextResponse.json({ ok: true })
+
+  // O texto aceito precisa ser o texto em vigor (se o admin mudou o aviso, o comprador relê)
+  const settings = await getSettings()
+  if (disclaimerVersion !== disclaimerVersionOf(settings.t)) {
+    return NextResponse.json({ error: "O aviso foi atualizado. Recarregue a página e confirme de novo." }, { status: 409 })
+  }
 
   if (itemId) {
     const item = await publicDb.item.findUnique({ where: { id: itemId }, select: { status: true } })
@@ -44,7 +56,18 @@ export async function POST(req: Request) {
 
   // createMany não usa RETURNING: o visitante só pode INSERIR mensagens, nunca lê-las (RLS).
   await publicDb.contactMessage.createMany({
-    data: [{ ...data, email: data.email || null, phone: data.phone || null, itemId: itemId ?? null, read: false }],
+    data: [
+      {
+        ...data,
+        email: data.email || null,
+        phone: data.phone || null,
+        itemId: itemId ?? null,
+        read: false,
+        // Data do servidor (não do navegador) + qual texto foi aceito
+        disclaimerAcceptedAt: new Date(),
+        disclaimerVersion,
+      },
+    ],
   })
   return NextResponse.json({ ok: true })
 }

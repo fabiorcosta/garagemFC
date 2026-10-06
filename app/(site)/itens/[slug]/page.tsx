@@ -3,6 +3,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { ChevronLeft, ExternalLink, Ruler, Sparkles } from "lucide-react"
 import { OffersBadge, Price, StatusBadge } from "@/components/item-badges"
+import { DisclaimerNotice } from "@/components/disclaimer"
 import { WhatsAppButton } from "@/components/whatsapp-button"
 import { photoFullUrl } from "@/lib/file-url"
 import { formatPrice, safeHttpsUrl, siteUrl } from "@/lib/format"
@@ -118,6 +119,8 @@ export default async function ItemPage(props: PageProps<"/itens/[slug]">) {
             )}
             <ShareButton title={item.title} url={url} />
           </div>
+
+          <DisclaimerNotice />
 
           <ContactForm
             itemId={item.id}

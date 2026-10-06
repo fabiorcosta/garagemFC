@@ -29,6 +29,8 @@ export default async function MessagesPage() {
           message: m.message,
           read: m.read,
           createdAt: m.createdAt.toISOString(),
+          disclaimerAcceptedAt: m.disclaimerAcceptedAt?.toISOString() ?? null,
+          disclaimerVersion: m.disclaimerVersion,
           item: m.item,
         }))}
       />

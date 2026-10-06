@@ -82,7 +82,9 @@ const statements: string[] = [
   `CREATE POLICY gar_public_read ON "Item" FOR SELECT TO garagem_public USING ("published" = true)`,
   `CREATE POLICY gar_public_read ON "ItemPhoto" FOR SELECT TO garagem_public
      USING ("isPublic" = true AND EXISTS (SELECT 1 FROM "Item" i WHERE i.id = "ItemPhoto"."itemId" AND i."published" = true))`,
-  `CREATE POLICY gar_public_insert ON "ContactMessage" FOR INSERT TO garagem_public WITH CHECK ("read" = false)`,
+  // Visitante só cria mensagem nova, não lida, e com o aceite do aviso de garantia registrado
+  `CREATE POLICY gar_public_insert ON "ContactMessage" FOR INSERT TO garagem_public
+     WITH CHECK ("read" = false AND "disclaimerAcceptedAt" IS NOT NULL AND "disclaimerVersion" IS NOT NULL)`,
   ...BUSINESS.map((t) => `CREATE POLICY gar_admin_all ON "${t}" FOR ALL TO garagem_admin USING (true) WITH CHECK (true)`),
 
   // Login: devolve só o registro do e-mail pedido

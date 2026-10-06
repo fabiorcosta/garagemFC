@@ -12,6 +12,7 @@ export const TEXT_GROUPS = {
   whatsapp: "Mensagens do WhatsApp",
   geral: "Rodapé e Google",
   privacidade: "Privacidade e cookies",
+  aviso: "Aviso de garantia (itens usados)",
 } as const
 export type TextGroup = keyof typeof TEXT_GROUPS
 
@@ -63,6 +64,35 @@ export const TEXTS = {
   // Rodapé e Google
   footerText: { group: "geral", label: "Texto do rodapé", default: "{site} · venda de mudança · pagamento e retirada combinados pelo WhatsApp", max: 200, hint: "{site} = título do site" },
   conditions: { group: "geral", label: "Opções de condição dos itens (uma por linha)", default: "Novo\nSeminovo\nÓtimo estado\nBom estado\nCom marcas de uso\nPrecisa de reparo", max: 600, multiline: true, hint: "Aparecem na lista ao cadastrar um item" },
+  disclaimerTitle: { group: "aviso", label: "Título do aviso", default: "Aviso importante: item usado, sem garantia", max: 80 },
+  disclaimerBody: {
+    group: "aviso",
+    label: "Texto do aviso",
+    multiline: true,
+    max: 2000,
+    hint: "Recomendado: revisar com um advogado. Mudar o texto muda a 'versão' registrada nos próximos aceites.",
+    default: [
+      "Este item é usado e vendido no estado em que se encontra, por pessoa física, por motivo de mudança.",
+      "Não é oferecida nenhuma garantia de funcionamento futuro, de durabilidade ou de continuidade de uso após a entrega.",
+      "O estado do item e os defeitos conhecidos estão descritos no anúncio e mostrados nas fotos. Tire suas dúvidas antes de comprar e examine o item no momento da retirada.",
+      "Este aviso não afasta direitos que a lei eventualmente assegure ao comprador, como os previstos nos arts. 441 a 446 do Código Civil (Lei nº 10.406/2002) para vícios ou defeitos ocultos.",
+    ].join("\n\n"),
+  },
+  disclaimerCheckbox: {
+    group: "aviso",
+    label: "Texto da caixa de confirmação",
+    default: "Li o aviso e estou ciente de que o item é usado, vendido no estado em que se encontra e sem garantia de funcionamento futuro.",
+    max: 300,
+    multiline: true,
+  },
+  disclaimerConfirm: { group: "aviso", label: "Botão de continuar", default: "Estou ciente, continuar", max: 40 },
+  disclaimerWhatsappNote: {
+    group: "aviso",
+    label: "Linha incluída na mensagem do WhatsApp",
+    default: "Li e aceito o aviso do site: item usado, vendido no estado em que se encontra, sem garantia de funcionamento futuro.",
+    max: 300,
+    multiline: true,
+  },
   cookieText: { group: "privacidade", label: "Aviso de cookies", default: "Usamos cookies de estatística (Google Analytics) para saber quais itens interessam mais. Você escolhe se permite.", max: 300, multiline: true },
   cookieAccept: { group: "privacidade", label: "Botão aceitar", default: "Aceitar", max: 30 },
   cookieReject: { group: "privacidade", label: "Botão recusar", default: "Recusar", max: 30 },

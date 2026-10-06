@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { track } from "@/lib/gtag"
+import { useDisclaimer } from "@/components/disclaimer"
 
 export function ContactForm({
   itemId,
@@ -22,6 +23,7 @@ export function ContactForm({
 }) {
   const [sending, setSending] = useState(false)
   const [sent, setSent] = useState(false)
+  const disclaimer = useDisclaimer()
 
   if (status !== "disponivel") {
     return (
@@ -43,14 +45,20 @@ export function ContactForm({
     )
   }
 
-  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const form = new FormData(e.currentTarget)
-    const payload: Record<string, FormDataEntryValue> = { ...Object.fromEntries(form), itemId }
+    const payload: Record<string, FormDataEntryValue | boolean> = { ...Object.fromEntries(form), itemId }
     if (!payload.email && !payload.phone) {
       toast.error("Informe um telefone ou e-mail para receber a resposta.")
       return
     }
+    if (!disclaimer) return
+    // Aviso de garantia à frente; o servidor só aceita a mensagem com o aceite e a versão do texto
+    disclaimer.confirm(() => send({ ...payload, disclaimerAccepted: true, disclaimerVersion: disclaimer.texts.version }))
+  }
+
+  async function send(payload: Record<string, FormDataEntryValue | boolean>) {
     setSending(true)
     try {
       const res = await fetch("/api/contact", {
