@@ -108,7 +108,7 @@ export const TEXTS = {
       "O {site} é um site pessoal para vender os itens de uma casa por motivo de mudança. Não há cadastro de compradores nem pagamento pelo site.",
       "",
       "O que coletamos",
-      "• Formulário \"Tenho interesse\": nome, telefone e/ou e-mail e a mensagem. Usados só para responder sobre o item, guardados apenas durante o período da venda e nunca vendidos ou repassados.",
+      "• Formulário \"Tenho interesse\": nome, telefone e/ou e-mail e a mensagem. Usados só para responder sobre o item, guardados apenas durante o período da venda e nunca vendidos ou repassados. Para avisar o vendedor, o conteúdo da mensagem é enviado ao e-mail dele por um serviço de envio de e-mails (Resend).",
       "• Estatísticas de visita (Google Analytics): só se você clicar em \"Aceitar\" no aviso de cookies. Mostram quais páginas e itens foram vistos. Não usamos esses dados para anúncios personalizados.",
       "",
       "WhatsApp",

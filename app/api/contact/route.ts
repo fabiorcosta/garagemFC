@@ -3,6 +3,8 @@ import { z } from "zod"
 import { publicDb, rateLimitHit } from "@/lib/db"
 import { disclaimerVersion as disclaimerVersionOf } from "@/lib/disclaimer"
 import { getSettings } from "@/lib/queries"
+import { siteUrl } from "@/lib/format"
+import { notifyNewMessage } from "@/lib/notify"
 import { badRequest, forbidden, idSchema, readJson, tooMany } from "@/lib/api"
 import { clientIp, isSameOrigin, rlKey } from "@/lib/security"
 
@@ -48,8 +50,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "O aviso foi atualizado. Recarregue a página e confirme de novo." }, { status: 409 })
   }
 
+  let item: { status: string; title: string; slug: string } | null = null
   if (itemId) {
-    const item = await publicDb.item.findUnique({ where: { id: itemId }, select: { status: true } })
+    item = await publicDb.item.findUnique({ where: { id: itemId }, select: { status: true, title: true, slug: true } })
     if (!item) return badRequest("Item não encontrado")
     if (item.status !== "disponivel") return badRequest("Este item não está mais disponível")
   }
@@ -68,6 +71,16 @@ export async function POST(req: Request) {
         disclaimerVersion,
       },
     ],
+  })
+  // Aviso por e-mail depois de salvo: se o e-mail falhar, a mensagem continua no painel
+  await notifyNewMessage({
+    name: data.name,
+    phone: data.phone || null,
+    email: data.email || null,
+    message: data.message,
+    itemTitle: item?.title ?? null,
+    itemUrl: item ? `${siteUrl()}/itens/${item.slug}` : null,
+    adminUrl: `${siteUrl()}/admin/mensagens`,
   })
   return NextResponse.json({ ok: true })
 }
