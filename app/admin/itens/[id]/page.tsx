@@ -4,6 +4,7 @@ import { ExternalLink } from "lucide-react"
 import { adminPageContext } from "@/lib/admin-auth"
 import { getSettings } from "@/lib/queries"
 import { photoThumbUrl } from "@/lib/file-url"
+import { toDateInput } from "@/lib/pickup-date"
 import { ItemForm } from "../item-form"
 
 export default async function EditItemPage(props: PageProps<"/admin/itens/[id]">) {
@@ -38,6 +39,7 @@ export default async function EditItemPage(props: PageProps<"/admin/itens/[id]">
           originalPrice: item.originalPrice ?? "",
           referenceUrl: item.referenceUrl ?? "",
           dimensions: item.dimensions ?? "",
+          pickupFrom: item.pickupFrom ? toDateInput(item.pickupFrom) : "",
           published: item.published,
           condition: item.condition,
           status: item.status,

@@ -5,6 +5,7 @@ import { idSchema } from "./api"
 import type { AdminDb } from "./db"
 import { slugify, STATUSES } from "./format"
 import { MAX_PHOTOS, referenceUrlSchema } from "./validators"
+import { parsePickupDate, toDateInput } from "./pickup-date"
 import { deleteFile, isValidKey } from "./s3"
 
 const price = z.coerce.number({ message: "Preço inválido" }).min(0, "Preço inválido").max(1_000_000, "Preço alto demais")
@@ -23,6 +24,12 @@ export const itemSchema = z.strictObject({
   referenceUrl: referenceUrlSchema.default(""),
   condition: z.string().trim().min(1).max(40).default("Bom estado"),
   dimensions: z.string().trim().max(80, "Medidas: no máximo 80 caracteres").default(""),
+  // "" = retirada imediata; senão uma data real do calendário (faixa conferida na rota, contra a data final da venda)
+  pickupFrom: z
+    .string()
+    .trim()
+    .refine((v) => v === "" || parsePickupDate(v) !== null, "Data de retirada inválida")
+    .default(""),
   published: z.boolean().default(true),
   status: z.enum(STATUSES).default("disponivel"),
   acceptsOffers: z.boolean().default(false),
@@ -58,6 +65,18 @@ export async function uniqueSlug(tx: Tx, title: string, ignoreId?: string) {
 }
 
 export class ValidationError extends Error {}
+
+/** Converte e confere a data de retirada: não antes de 2026 e não depois da data final da venda. */
+export function resolvePickupFrom(value: string, saleEndDate: Date | null) {
+  if (!value) return null
+  const d = parsePickupDate(value)
+  if (!d) throw new ValidationError("Data de retirada inválida")
+  if (value < "2026-01-01") throw new ValidationError("Data de retirada inválida")
+  if (saleEndDate && value > toDateInput(saleEndDate)) {
+    throw new ValidationError("A data de retirada não pode ser depois da data final da venda")
+  }
+  return d
+}
 
 export async function assertCategory(db: AdminDb | Tx, categoryId: string | null | undefined) {
   if (!categoryId) return

@@ -22,6 +22,7 @@ type Row = {
   featured: boolean
   published: boolean
   photoCount: number
+  pickup: string | null
 }
 
 const statusBtn: Record<ItemStatus, string> = {
@@ -131,6 +132,7 @@ export function ItemsTable({ rows }: { rows: Row[] }) {
                   )}
                   <span className="font-semibold text-foreground">{formatPrice(r.price)}</span>
                   {r.category && <span>· {r.category}</span>}
+                  {r.pickup && <span>· retira a partir de {r.pickup}</span>}
                   <span className={r.photoCount === 0 ? "font-semibold text-destructive" : ""}>
                     · {r.photoCount} {r.photoCount === 1 ? "foto" : "fotos"}
                   </span>

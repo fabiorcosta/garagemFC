@@ -1,14 +1,16 @@
 import Image from "next/image"
 import Link from "next/link"
-import { ImageOff } from "lucide-react"
+import { CalendarClock, ImageOff } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { photoThumbUrl } from "@/lib/file-url"
+import { pickupLabel } from "@/lib/pickup-date"
 import type { ItemCardData } from "@/lib/queries"
 import { OffersBadge, Price, StatusBadge } from "./item-badges"
 
 export function ItemCard({ item, priority = false }: { item: ItemCardData; priority?: boolean }) {
   const thumb = photoThumbUrl(item.photos[0])
   const sold = item.status === "vendido"
+  const pickup = pickupLabel(item.pickupFrom, "short")
   return (
     <Link
       href={`/itens/${item.slug}`}
@@ -45,6 +47,12 @@ export function ItemCard({ item, priority = false }: { item: ItemCardData; prior
         <div className="mt-auto flex flex-col gap-1.5">
           <Price price={item.price} originalPrice={item.originalPrice} />
           {item.acceptsOffers && !sold && <OffersBadge className="self-start" />}
+          {pickup && !sold && (
+            <span className="inline-flex items-center gap-1 self-start text-[11px] font-medium text-muted-foreground">
+              <CalendarClock className="size-3" aria-hidden />
+              Retirada a partir de {pickup}
+            </span>
+          )}
         </div>
       </div>
     </Link>

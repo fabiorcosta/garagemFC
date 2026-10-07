@@ -4,6 +4,7 @@ import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { adminPageContext } from "@/lib/admin-auth"
 import { photoThumbUrl } from "@/lib/file-url"
+import { pickupLabel } from "@/lib/pickup-date"
 import { ItemsTable } from "./items-table"
 
 export default async function AdminItemsPage() {
@@ -26,6 +27,7 @@ export default async function AdminItemsPage() {
     thumb: photoThumbUrl(i.photos[0]),
     featured: i.featured,
     published: i.published,
+    pickup: pickupLabel(i.pickupFrom, "short"),
     photoCount: i._count.photos,
   }))
 

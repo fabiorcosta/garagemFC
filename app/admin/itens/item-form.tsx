@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { adminFetch } from "@/lib/admin-fetch"
 import { STATUS_LABEL, STATUSES } from "@/lib/format"
+import { todayInput } from "@/lib/pickup-date"
 
 export type ItemFormValues = {
   id?: string
@@ -21,6 +22,7 @@ export type ItemFormValues = {
   originalPrice: number | ""
   referenceUrl: string
   dimensions: string
+  pickupFrom: string
   published: boolean
   condition: string
   status: string
@@ -75,6 +77,7 @@ export function ItemForm({
         status: values.status,
         acceptsOffers: values.acceptsOffers,
         dimensions: values.dimensions.trim(),
+        pickupFrom: values.pickupFrom,
         published: values.published,
         featured: values.featured,
         referenceUrl: values.referenceUrl.trim(),
@@ -162,6 +165,27 @@ export function ItemForm({
             className="h-10"
           />
           <p className="text-xs text-muted-foreground">É a primeira pergunta em móveis e eletrodomésticos: &quot;cabe na minha casa?&quot;</p>
+        </div>
+        <div className="grid gap-1.5 sm:col-span-2">
+          <Label htmlFor="pickupFrom">Disponível para retirada a partir de (opcional)</Label>
+          <div className="flex items-center gap-2">
+            <Input
+              id="pickupFrom"
+              type="date"
+              min={todayInput()}
+              value={values.pickupFrom}
+              onChange={(e) => set("pickupFrom", e.target.value)}
+              className="h-10 w-auto"
+            />
+            {values.pickupFrom && (
+              <Button type="button" variant="ghost" size="sm" onClick={() => set("pickupFrom", "")}>
+                Limpar (retirada imediata)
+              </Button>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Vazio = pode retirar já. Use para itens que só saem perto da mudança (ex.: geladeira, cama).
+          </p>
         </div>
         <div className="grid gap-1.5">
           <Label htmlFor="condition">Condição</Label>

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
+import { getSettings } from "@/lib/queries"
 import { adminRoute, badRequest, readJson, revalidatePublic } from "@/lib/api"
-import { assertCategory, itemPublicFields, itemSchema, syncPhotos, uniqueSlug, ValidationError } from "@/lib/item-service"
+import { assertCategory, itemPublicFields, itemSchema, resolvePickupFrom, syncPhotos, uniqueSlug, ValidationError } from "@/lib/item-service"
 
 export const GET = adminRoute(async (_req, _ctx, { db }) => {
   const items = await db.item.findMany({
@@ -16,10 +17,11 @@ export const POST = adminRoute(async (req, _ctx, { transaction }) => {
   const { photos, ...data } = parsed.data
 
   try {
+    const pickupFrom = resolvePickupFrom(data.pickupFrom, (await getSettings()).saleEndDate)
     const item = await transaction(async (tx) => {
       await assertCategory(tx, data.categoryId)
       const created = await tx.item.create({
-        data: { ...data, originalPrice: data.originalPrice || null, referenceUrl: data.referenceUrl || null, dimensions: data.dimensions || null, slug: await uniqueSlug(tx, data.title) },
+        data: { ...data, originalPrice: data.originalPrice || null, referenceUrl: data.referenceUrl || null, dimensions: data.dimensions || null, pickupFrom, slug: await uniqueSlug(tx, data.title) },
         select: itemPublicFields,
       })
       await syncPhotos(tx, created.id, photos)

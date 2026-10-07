@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { getSettings } from "@/lib/queries"
 import { adminRoute, badRequest, notFound, parseId, readJson, revalidatePublic } from "@/lib/api"
 import {
   assertCategory,
@@ -8,6 +9,7 @@ import {
   quickUpdateSchema,
   syncPhotos,
   uniqueSlug,
+  resolvePickupFrom,
   ValidationError,
 } from "@/lib/item-service"
 
@@ -24,6 +26,7 @@ export const GET = adminRoute<{ id: string }>(async (_req, { params }, { db }) =
       referenceUrl: true,
       condition: true,
       dimensions: true,
+      pickupFrom: true,
       published: true,
       acceptsOffers: true,
       featured: true,
@@ -53,6 +56,7 @@ export const PUT = adminRoute<{ id: string }>(async (req, { params }, { db, tran
   const { photos, ...data } = parsed.data
 
   try {
+    const pickupFrom = resolvePickupFrom(data.pickupFrom, (await getSettings()).saleEndDate)
     const result = await transaction(async (tx) => {
       const existing = await tx.item.findUnique({ where: { id }, select: { title: true, slug: true } })
       if (!existing) return null
@@ -61,7 +65,7 @@ export const PUT = adminRoute<{ id: string }>(async (req, { params }, { db, tran
       const slug = data.title === existing.title ? existing.slug : await uniqueSlug(tx, data.title, id)
       const item = await tx.item.update({
         where: { id },
-        data: { ...data, originalPrice: data.originalPrice || null, referenceUrl: data.referenceUrl || null, dimensions: data.dimensions || null, slug },
+        data: { ...data, originalPrice: data.originalPrice || null, referenceUrl: data.referenceUrl || null, dimensions: data.dimensions || null, pickupFrom, slug },
         select: itemPublicFields,
       })
       const removed = await syncPhotos(tx, id, photos)

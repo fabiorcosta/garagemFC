@@ -41,6 +41,14 @@ export const TEXTS = {
   contactSuccess: { group: "item", label: "Confirmação de envio", default: "Mensagem enviada! O Fabio vai entrar em contato em breve.", max: 200 },
   soldMessage: { group: "item", label: "Aviso de item vendido", default: "Este item já foi vendido. Dá uma olhada nos outros itens disponíveis!", max: 200, multiline: true },
   reservedMessage: { group: "item", label: "Aviso de item reservado", default: "Este item está reservado para outra pessoa. Se a reserva cair, ele volta a ficar disponível aqui.", max: 200, multiline: true },
+  pickupNow: { group: "item", label: "Retirada: item sem data (imediata)", default: "Retirada imediata, com hora marcada.", max: 120 },
+  pickupLater: {
+    group: "item",
+    label: "Retirada: item com data",
+    default: "Disponível para retirada a partir de {data}. Dá para reservar antes.",
+    max: 160,
+    hint: "{data} = data de retirada do item",
+  },
   pickupNote: { group: "item", label: "Linha de retirada", default: "Retirada em {local}.", max: 120, hint: "{local} = bairro ou cidade" },
 
   // Página de retirada

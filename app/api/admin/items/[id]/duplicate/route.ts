@@ -20,6 +20,7 @@ export const POST = adminRoute<{ id: string }>(async (_req, { params }, { transa
         referenceUrl: true,
         condition: true,
         dimensions: true,
+        pickupFrom: true,
         acceptsOffers: true,
         categoryId: true,
       },

@@ -18,6 +18,7 @@ export default async function NewItemPage() {
           originalPrice: "",
           referenceUrl: "",
           dimensions: "",
+          pickupFrom: "",
           published: true,
           condition: "Bom estado",
           status: "disponivel",

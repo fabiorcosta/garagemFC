@@ -53,6 +53,7 @@ export const itemCardSelect = {
   originalPrice: true,
   status: true,
   acceptsOffers: true,
+  pickupFrom: true,
   createdAt: true,
   photos: { orderBy: { sortOrder: "asc" }, take: 1, select: { url: true, cloud_storage_path: true, thumbnailPath: true } },
 } satisfies Prisma.ItemSelect
@@ -167,6 +168,7 @@ export const getItemBySlug = cache(async (slug: string) => {
       originalPrice: true,
       referenceUrl: true,
       dimensions: true,
+      pickupFrom: true,
       condition: true,
       status: true,
       acceptsOffers: true,

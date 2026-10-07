@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ChevronLeft, ExternalLink, Ruler, Sparkles } from "lucide-react"
+import { CalendarClock, ChevronLeft, ExternalLink, Ruler, Sparkles } from "lucide-react"
 import { OffersBadge, Price, StatusBadge } from "@/components/item-badges"
 import { DisclaimerNotice } from "@/components/disclaimer"
 import { WhatsAppButton } from "@/components/whatsapp-button"
@@ -9,6 +9,7 @@ import { photoFullUrl } from "@/lib/file-url"
 import { formatPrice, safeHttpsUrl, siteUrl } from "@/lib/format"
 import { getItemBySlug, getSettings } from "@/lib/queries"
 import { fill } from "@/lib/site-texts"
+import { pickupLabel } from "@/lib/pickup-date"
 import { ContactForm } from "./contact-form"
 import { Gallery } from "./gallery"
 import { ShareButton, TrackView } from "./share-button"
@@ -54,6 +55,7 @@ export default async function ItemPage(props: PageProps<"/itens/[slug]">) {
   const available = item.status === "disponivel"
   const t = settings.t
   const reference = safeHttpsUrl(item.referenceUrl)
+  const pickup = pickupLabel(item.pickupFrom)
   const waMessage = fill(t.whatsappItemMessage, { item: item.title, link: url })
 
   return (
@@ -94,6 +96,13 @@ export default async function ItemPage(props: PageProps<"/itens/[slug]">) {
               </a>
             )}
           </div>
+
+          {item.status !== "vendido" && (
+            <p className="flex items-center gap-2 rounded-xl bg-muted px-3 py-2 text-sm">
+              <CalendarClock className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+              <span className="font-semibold">{pickup ? fill(t.pickupLater, { data: pickup }) : t.pickupNow}</span>
+            </p>
+          )}
 
           {item.dimensions && (
             <p className="flex items-center gap-2 rounded-xl bg-muted px-3 py-2 text-sm">
