@@ -1,8 +1,12 @@
 /**
- * Gera o ADMIN_PASSWORD_HASH para uma senha nova, sem a senha aparecer na tela nem ficar no histórico.
- * Uso: npm run admin:hash  → digite a senha 2x → cole o hash na variável ADMIN_PASSWORD_HASH do Railway.
+ * Troca a senha do admin sem a senha aparecer na tela, no histórico ou sair do computador.
+ *   npm run admin:hash   → digite a senha 2x → mostra o hash para colar em ADMIN_PASSWORD_HASH no Railway.
+ *   npm run admin:reset  → igual, mas já grava o hash no Railway (CLI `railway` logado e pasta vinculada)
+ *                          e o site reinicia com a senha nova (~2 min).
+ * Só o hash (bcrypt) sai daqui; a senha em si nunca é enviada nem exibida.
  */
 import bcrypt from "bcryptjs"
+import { execFileSync } from "node:child_process"
 import { createInterface } from "node:readline"
 
 function ask(question: string): Promise<string> {
@@ -21,13 +25,22 @@ function ask(question: string): Promise<string> {
 }
 
 async function main() {
+  const apply = process.argv.includes("--apply")
   const a = await ask("Nova senha do admin (mín. 14 caracteres): ")
   if (a.length < 14) throw new Error("Senha curta demais (mínimo 14 caracteres).")
   const b = await ask("Repita a senha: ")
   if (a !== b) throw new Error("As senhas não conferem.")
   const hash = await bcrypt.hash(a, 12)
-  console.log("\nCole este valor em ADMIN_PASSWORD_HASH (Railway → garagemFC → Variables):\n")
-  console.log(hash)
+
+  if (!apply) {
+    console.log("\nCole este valor em ADMIN_PASSWORD_HASH (Railway → garagemFC → Variables):\n")
+    console.log(hash)
+    return
+  }
+
+  // execFile com lista de argumentos: nada passa por um shell (sem risco de injeção)
+  execFileSync("railway", ["variables", "-s", "garagemFC", "--set", `ADMIN_PASSWORD_HASH=${hash}`], { stdio: "ignore" })
+  console.log("\n✓ Senha nova gravada no Railway. O site reinicia sozinho; em ~2 minutos ela já vale no /admin.")
 }
 
 main().catch((e) => {

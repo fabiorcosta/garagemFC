@@ -11,7 +11,8 @@
     "db:seed": "tsx --env-file=.env scripts/seed.ts",
     "postinstall": "prisma generate",
     "db:deploy": "prisma db push --skip-generate && tsx scripts/db-security.ts && tsx scripts/seed.ts && tsx scripts/remove-sample-items.ts && tsx scripts/delete-items.ts",
-    "admin:hash": "tsx scripts/admin-password.ts"
+    "admin:hash": "tsx scripts/admin-password.ts",
+    "admin:reset": "tsx scripts/admin-password.ts --apply"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1141.0",
