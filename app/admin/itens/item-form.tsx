@@ -22,6 +22,8 @@ export type ItemFormValues = {
   originalPrice: number | ""
   referenceUrl: string
   dimensions: string
+  usageYears: number | ""
+  usageMonthsRest: number | ""
   pickupFrom: string
   published: boolean
   condition: string
@@ -77,6 +79,10 @@ export function ItemForm({
         status: values.status,
         acceptsOffers: values.acceptsOffers,
         dimensions: values.dimensions.trim(),
+        usageMonths:
+          values.usageYears === "" && values.usageMonthsRest === ""
+            ? null
+            : Number(values.usageYears || 0) * 12 + Number(values.usageMonthsRest || 0),
         pickupFrom: values.pickupFrom,
         published: values.published,
         featured: values.featured,
@@ -167,6 +173,39 @@ export function ItemForm({
           <p className="text-xs text-muted-foreground">É a primeira pergunta em móveis e eletrodomésticos: &quot;cabe na minha casa?&quot;</p>
         </div>
         <div className="grid gap-1.5 sm:col-span-2">
+          <Label htmlFor="usageYears">Tempo de uso (opcional)</Label>
+          <div className="flex flex-wrap items-center gap-2">
+            <Input
+              id="usageYears"
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={50}
+              step={1}
+              placeholder="0"
+              value={values.usageYears}
+              onChange={(e) => set("usageYears", e.target.value === "" ? "" : Math.max(0, Math.min(50, Math.trunc(Number(e.target.value)))))}
+              className="h-10 w-20"
+            />
+            <span className="text-sm text-muted-foreground">anos e</span>
+            <Input
+              id="usageMonthsRest"
+              aria-label="Meses de uso"
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={11}
+              step={1}
+              placeholder="0"
+              value={values.usageMonthsRest}
+              onChange={(e) => set("usageMonthsRest", e.target.value === "" ? "" : Math.max(0, Math.min(11, Math.trunc(Number(e.target.value)))))}
+              className="h-10 w-20"
+            />
+            <span className="text-sm text-muted-foreground">meses</span>
+          </div>
+          <p className="text-xs text-muted-foreground">Deixe em branco se não souber. 0 anos e 0 meses = &quot;menos de 1 mês&quot;.</p>
+        </div>
+        <div className="grid gap-1.5 sm:col-span-2">
           <Label htmlFor="pickupFrom">Disponível para retirada a partir de (opcional)</Label>
           <div className="flex items-center gap-2">
             <Input
@@ -224,7 +263,7 @@ export function ItemForm({
             maxLength={5000}
             value={values.description}
             onChange={(e) => set("description", e.target.value)}
-            placeholder="Marca, modelo, tempo de uso, defeitos…"
+            placeholder="Marca, modelo, defeitos…"
           />
         </div>
         <label

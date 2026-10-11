@@ -26,6 +26,7 @@ export const GET = adminRoute<{ id: string }>(async (_req, { params }, { db }) =
       referenceUrl: true,
       condition: true,
       dimensions: true,
+      usageMonths: true,
       pickupFrom: true,
       published: true,
       acceptsOffers: true,

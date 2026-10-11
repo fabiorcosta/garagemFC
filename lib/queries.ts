@@ -168,6 +168,7 @@ export const getItemBySlug = cache(async (slug: string) => {
       originalPrice: true,
       referenceUrl: true,
       dimensions: true,
+      usageMonths: true,
       pickupFrom: true,
       condition: true,
       status: true,

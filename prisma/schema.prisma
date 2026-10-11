@@ -42,6 +42,8 @@ model Item {
   condition     String           @default("Bom estado")
   /// Medidas em texto livre (ex.: "180 x 90 x 75 cm")
   dimensions    String?
+  /// Tempo de uso em meses (null = não informado). 0 = menos de 1 mês.
+  usageMonths   Int?
   /// Disponível para retirada a partir desta data (null = imediata). Meio-dia de Brasília.
   pickupFrom    DateTime?
   /// false = rascunho: invisível ao público (garantido também por RLS no papel garagem_public)

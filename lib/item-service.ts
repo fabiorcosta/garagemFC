@@ -24,6 +24,7 @@ export const itemSchema = z.strictObject({
   referenceUrl: referenceUrlSchema.default(""),
   condition: z.string().trim().min(1).max(40).default("Bom estado"),
   dimensions: z.string().trim().max(80, "Medidas: no máximo 80 caracteres").default(""),
+  usageMonths: z.number().int("Tempo de uso inválido").min(0, "Tempo de uso inválido").max(600, "Tempo de uso: no máximo 50 anos").nullable().default(null),
   // "" = retirada imediata; senão uma data real do calendário (faixa conferida na rota, contra a data final da venda)
   pickupFrom: z
     .string()

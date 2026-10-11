@@ -61,3 +61,14 @@ export function safeHttpsUrl(value: string | null | undefined) {
     return null
   }
 }
+
+/** Meses de uso → texto ("menos de 1 mês", "8 meses", "1 ano", "2 anos e 3 meses"). null = não informado. */
+export function formatUsage(months: number | null | undefined) {
+  if (months == null) return null
+  if (months < 1) return "menos de 1 mês"
+  const y = Math.floor(months / 12)
+  const m = months % 12
+  const ys = y ? `${y} ${y === 1 ? "ano" : "anos"}` : ""
+  const ms = m ? `${m} ${m === 1 ? "mês" : "meses"}` : ""
+  return ys && ms ? `${ys} e ${ms}` : ys || ms
+}

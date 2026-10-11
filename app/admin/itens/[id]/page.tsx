@@ -39,6 +39,8 @@ export default async function EditItemPage(props: PageProps<"/admin/itens/[id]">
           originalPrice: item.originalPrice ?? "",
           referenceUrl: item.referenceUrl ?? "",
           dimensions: item.dimensions ?? "",
+          usageYears: item.usageMonths == null ? "" : Math.floor(item.usageMonths / 12),
+          usageMonthsRest: item.usageMonths == null ? "" : item.usageMonths % 12,
           pickupFrom: item.pickupFrom ? toDateInput(item.pickupFrom) : "",
           published: item.published,
           condition: item.condition,

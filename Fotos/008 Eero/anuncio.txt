@@ -1,0 +1,43 @@
+TÍTULO
+Roteador Wi-Fi 6 mesh eero 6 (N010001) dual-band - usado
+
+CATEGORIA
+Eletrônicos
+
+ESTADO
+Usado - estado regular
+
+DESCRIÇÃO
+Roteador mesh eero 6 (modelo N010001), Wi-Fi 6 dual-band AX1800. Cobre cerca de 140 m² (1.500 pés²) por unidade e atende planos de internet de até 500 Mbps. Pode ser usado sozinho ou como parte de uma rede mesh com outros eeros. Tem duas portas Gigabit Ethernet e funciona com o app eero.
+
+Estado de conservação: regular. O plástico está amarelado e sujo, principalmente na base, com pequenas manchas e arranhões. Há uma etiqueta de IP (192.168.4.2) colada em cima. O cabo de energia está conectado. Não tem caixa.
+
+Venda de garagem, o item está como nas fotos. O aparelho é de origem importada, então confira a compatibilidade da fonte e da tomada antes de comprar. Antes de usar, é preciso desvincular o aparelho da conta eero anterior ou fazer o reset de fábrica. Qualquer dúvida, é só chamar!
+
+ESPECIFICAÇÕES
+- Modelo: eero 6 (N010001)
+- Wi-Fi: Wi-Fi 6 (802.11ax), dual-band 2,4 GHz e 5 GHz, AX1800, MU-MIMO 2x2
+- Velocidade: até 500 Mbps de internet (Wi-Fi até 900 Mbps)
+- Cobertura: até 1.500 pés² (cerca de 140 m²) por unidade
+- Portas: 2x Gigabit Ethernet (WAN/LAN)
+- Processador e memória: quad-core 1,2 GHz, 512 MB de RAM, 4 GB de armazenamento flash
+- Conectividade extra: Bluetooth 5.0 LE e hub Zigbee para casa inteligente
+- Segurança: WPA2 e WPA3, rede de convidados
+- Compatibilidade: funciona com Alexa e o app eero; sem suporte a Matter, segundo o B&H
+- Alimentação: 100 a 240 V, 50/60 Hz
+
+MARCA / MODELO
+eero / eero 6 (Model No. N010001)
+
+PREÇO NOVO - EUA
+US$ 89.99 (eero (fabricante))
+  https://eero.com/shop/eero-6
+
+PREÇO NOVO - BRASIL
+R$ 1.879,00 (Mercado Livre (listagem de produto importado, 'Roteador Eero 6 Ax1800 Dual-band Wi-fi Mesh'))
+  https://lista.mercadolivre.com.br/roteador-mesh-eero
+
+FOTOS OFICIAIS
+- https://eero.com/shop/eero-6
+- https://www.amazon.com/Amazon-eero-Wi-Fi-router-newest/dp/B091G65HH6
+- https://www.bhphotovideo.com/c/product/1601114-REG/eero_m110311_6_mesh_wi_fi_6.html
