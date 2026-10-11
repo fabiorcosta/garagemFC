@@ -7,28 +7,58 @@
  */
 import bcrypt from "bcryptjs"
 import { execFileSync } from "node:child_process"
-import { createInterface } from "node:readline"
 
-function ask(question: string): Promise<string> {
-  return new Promise((resolve) => {
-    const rl = createInterface({ input: process.stdin, output: process.stdout, terminal: true })
-    // Esconde o que é digitado
-    ;(rl as unknown as { _writeToOutput: (s: string) => void })._writeToOutput = (s: string) => {
-      if (s.includes(question)) process.stdout.write(s)
-    }
-    rl.question(question, (answer) => {
-      rl.close()
+/**
+ * Lê a senha tecla por tecla com o terminal em modo "raw": nada do que é digitado é ecoado
+ * (só um "•" por caractere). Enter confirma, Backspace apaga, Ctrl-C cancela.
+ */
+function askHidden(question: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const stdin = process.stdin
+    if (!stdin.isTTY) return reject(new Error("Rode este comando num terminal interativo."))
+    process.stdout.write(question)
+    let value = ""
+    stdin.setRawMode(true)
+    stdin.resume()
+    stdin.setEncoding("utf8")
+    const done = (err?: Error) => {
+      stdin.setRawMode(false)
+      stdin.pause()
+      stdin.removeListener("data", onData)
       process.stdout.write("\n")
-      resolve(answer)
-    })
+      if (err) reject(err)
+      else resolve(value)
+    }
+    const onData = (chunk: string) => {
+      for (const ch of chunk) {
+        if (ch === "\r" || ch === "\n") return done()
+        if (ch === "\u0003") return done(new Error("Cancelado."))
+        if (ch === "\u007f" || ch === "\b") {
+          if (value.length) {
+            value = value.slice(0, -1)
+            process.stdout.write("\b \b")
+          }
+          continue
+        }
+        if (ch < " ") continue // ignora outras teclas de controle (setas etc.)
+        value += ch
+        process.stdout.write("•")
+      }
+    }
+    stdin.on("data", onData)
   })
 }
 
 async function main() {
   const apply = process.argv.includes("--apply")
-  const a = await ask("Nova senha do admin (mín. 14 caracteres): ")
-  if (a.length < 14) throw new Error("Senha curta demais (mínimo 14 caracteres).")
-  const b = await ask("Repita a senha: ")
+  let a = ""
+  // Senha curta: pergunta de novo em vez de encerrar (encerrar levava a pessoa a digitar a senha no shell)
+  for (;;) {
+    a = await askHidden("Nova senha do admin (mín. 14 caracteres): ")
+    if (a.length >= 14) break
+    console.log(`Curta demais (${a.length} caracteres). Tente de novo.`)
+  }
+  const b = await askHidden("Repita a senha: ")
   if (a !== b) throw new Error("As senhas não conferem.")
   const hash = await bcrypt.hash(a, 12)
 
