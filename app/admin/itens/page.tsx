@@ -17,7 +17,7 @@ export default async function AdminItemsPage() {
       photos: { orderBy: { sortOrder: "asc" }, take: 1 },
       _count: { select: { photos: true } },
       sale: {
-        select: { buyerName: true, soldBy: true, finalPrice: true, paidPercent: true, paymentMethod: true, soldAt: true, notes: true },
+        select: { buyerName: true, finalPrice: true, paidPercent: true, paymentMethod: true, soldAt: true, notes: true },
       },
     },
   })
@@ -36,7 +36,6 @@ export default async function AdminItemsPage() {
     sale: i.sale
       ? {
           buyerName: i.sale.buyerName ?? "",
-          soldBy: i.sale.soldBy ?? "",
           finalPrice: i.sale.finalPrice ?? ("" as const),
           paidPercent: i.sale.paidPercent,
           paymentMethod: (i.sale.paymentMethod ?? "") as SaleValues["paymentMethod"],

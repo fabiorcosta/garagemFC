@@ -19,7 +19,6 @@ export function paymentStatusLabel(percent: number) {
 
 export type SaleValues = {
   buyerName: string
-  soldBy: string
   finalPrice: number | ""
   paidPercent: number
   paymentMethod: PaymentMethod | ""

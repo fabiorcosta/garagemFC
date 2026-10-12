@@ -10,7 +10,6 @@ import { PAYMENT_METHODS } from "@/lib/sale-shared"
  */
 const saleSchema = z.strictObject({
   buyerName: z.string().trim().max(80, "Nome do comprador: no máximo 80 caracteres").default(""),
-  soldBy: z.string().trim().max(60, "Vendido por: no máximo 60 caracteres").default(""),
   finalPrice: z.number().min(0, "Valor inválido").max(1_000_000, "Valor alto demais").nullable().default(null),
   paidPercent: z.number().int("Percentual inválido").min(0, "Percentual inválido").max(100, "Percentual inválido"),
   paymentMethod: z.union([z.enum(PAYMENT_METHODS), z.literal("")]).default(""),
@@ -34,7 +33,6 @@ export const PUT = adminRoute<{ id: string }>(async (req, { params }, { db }) =>
 
   const data = {
     buyerName: d.buyerName || null,
-    soldBy: d.soldBy || null,
     finalPrice: d.finalPrice,
     paidPercent: d.paidPercent,
     paymentMethod: d.paymentMethod || null,

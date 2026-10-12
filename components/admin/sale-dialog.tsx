@@ -17,7 +17,6 @@ const selectCls =
 
 export const EMPTY_SALE: SaleValues = {
   buyerName: "",
-  soldBy: "",
   finalPrice: "",
   paidPercent: 0,
   paymentMethod: "",
@@ -98,20 +97,9 @@ export function SaleDialog({
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <div className="grid gap-1.5">
+          <div className="grid gap-1.5 sm:col-span-2">
             <Label htmlFor="buyerName">Comprador</Label>
             <Input id="buyerName" maxLength={80} value={v.buyerName} onChange={(e) => set("buyerName", e.target.value)} className="h-10" />
-          </div>
-          <div className="grid gap-1.5">
-            <Label htmlFor="soldBy">Vendido por</Label>
-            <Input
-              id="soldBy"
-              maxLength={60}
-              placeholder="Quem fechou a venda"
-              value={v.soldBy}
-              onChange={(e) => set("soldBy", e.target.value)}
-              className="h-10"
-            />
           </div>
           <div className="grid gap-1.5">
             <Label htmlFor="finalPrice">Valor da venda (R$)</Label>
