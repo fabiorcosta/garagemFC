@@ -38,8 +38,9 @@ export function ItemsTable({ rows }: { rows: Row[] }) {
   const router = useRouter()
   const [filter, setFilter] = useState<"" | ItemStatus | "rascunho">("")
   const [busy, setBusy] = useState<string | null>(null)
-  const [saleFor, setSaleFor] = useState<string | null>(null)
-  const saleRow = rows.find((r) => r.id === saleFor)
+  // markSold vem da AÇÃO que abriu a janela, não da linha (que pode estar desatualizada logo após mudar o status)
+  const [saleFor, setSaleFor] = useState<{ id: string; markSold: boolean } | null>(null)
+  const saleRow = rows.find((r) => r.id === saleFor?.id)
   const matches = (r: Row, f: typeof filter) => (f === "rascunho" ? !r.published : f ? r.status === f : true)
   const visible = rows.filter((r) => matches(r, filter))
 
@@ -50,7 +51,7 @@ export function ItemsTable({ rows }: { rows: Row[] }) {
       toast.success(`Marcado como ${STATUS_LABEL[status].toLowerCase()}`)
       router.refresh()
       // Vendido ou reservado: já abre os dados da venda (comprador, pagamento)
-      if (status !== "disponivel") setSaleFor(id)
+      if (status !== "disponivel") setSaleFor({ id, markSold: false })
     } catch (e) {
       toast.error((e as Error).message)
     } finally {
@@ -143,7 +144,7 @@ export function ItemsTable({ rows }: { rows: Row[] }) {
                   {r.status !== "disponivel" && (
                     <button
                       type="button"
-                      onClick={() => setSaleFor(r.id)}
+                      onClick={() => setSaleFor({ id: r.id, markSold: r.status === "disponivel" })}
                       className={cn(
                         "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase",
                         !r.sale
@@ -166,7 +167,7 @@ export function ItemsTable({ rows }: { rows: Row[] }) {
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
               <div className="flex rounded-full border bg-muted p-0.5" role="group" aria-label="Status">
                 {STATUSES.map((s) => (
                   <button
@@ -183,7 +184,7 @@ export function ItemsTable({ rows }: { rows: Row[] }) {
                   </button>
                 ))}
               </div>
-              <div className="ml-auto flex">
+              <div className="ml-auto flex flex-wrap">
                 <button
                   onClick={() => setPublished(r.id, !r.published)}
                   disabled={busy === r.id}
@@ -193,16 +194,14 @@ export function ItemsTable({ rows }: { rows: Row[] }) {
                 >
                   {r.published ? <Eye className="size-4" /> : <EyeOff className="size-4 text-amber" />}
                 </button>
-                {r.status !== "disponivel" && (
-                  <button
-                    onClick={() => setSaleFor(r.id)}
-                    className="rounded-full p-2 hover:bg-muted"
-                    aria-label="Dados da venda"
-                    title="Dados da venda"
-                  >
-                    <Receipt className="size-4" />
-                  </button>
-                )}
+                <button
+                  onClick={() => setSaleFor({ id: r.id, markSold: r.status === "disponivel" })}
+                  className="rounded-full p-2 hover:bg-muted"
+                  aria-label={r.status === "disponivel" ? "Registrar venda" : "Dados da venda"}
+                  title={r.status === "disponivel" ? "Registrar venda" : "Dados da venda"}
+                >
+                  <Receipt className="size-4" />
+                </button>
                 <button
                   onClick={() => duplicate(r.id)}
                   disabled={busy === r.id}
@@ -243,6 +242,7 @@ export function ItemsTable({ rows }: { rows: Row[] }) {
           itemTitle={saleRow.title}
           listPrice={saleRow.price}
           initial={saleRow.sale}
+          markSold={saleFor?.markSold ?? false}
           onClose={() => setSaleFor(null)}
           onSaved={() => {
             setSaleFor(null)

@@ -6,12 +6,20 @@ import { getSettings } from "@/lib/queries"
 import { photoThumbUrl } from "@/lib/file-url"
 import { toDateInput } from "@/lib/pickup-date"
 import { ItemForm } from "../item-form"
+import { SaleSection } from "@/components/admin/sale-section"
+import type { SaleValues } from "@/lib/sale-shared"
 
 export default async function EditItemPage(props: PageProps<"/admin/itens/[id]">) {
   const { db } = await adminPageContext()
   const { id } = await props.params
   const [item, categories] = await Promise.all([
-    db.item.findUnique({ where: { id }, include: { photos: { orderBy: { sortOrder: "asc" } } } }),
+    db.item.findUnique({
+      where: { id },
+      include: {
+        photos: { orderBy: { sortOrder: "asc" } },
+        sale: { select: { buyerName: true, finalPrice: true, paidPercent: true, paymentMethod: true, soldAt: true, notes: true } },
+      },
+    }),
     db.category.findMany({ orderBy: [{ sortOrder: "asc" }, { name: "asc" }], select: { id: true, name: true } }),
   ])
   if (!item) notFound()
@@ -28,7 +36,27 @@ export default async function EditItemPage(props: PageProps<"/admin/itens/[id]">
           <span className="rounded-full bg-amber px-3 py-1 text-xs font-bold text-[#3D2A06] uppercase">Rascunho</span>
         )}
       </div>
+      <SaleSection
+        itemId={item.id}
+        itemTitle={item.title}
+        listPrice={item.price}
+        status={item.status}
+        sale={
+          item.sale
+            ? {
+                buyerName: item.sale.buyerName ?? "",
+                finalPrice: item.sale.finalPrice ?? "",
+                paidPercent: item.sale.paidPercent,
+                paymentMethod: (item.sale.paymentMethod ?? "") as SaleValues["paymentMethod"],
+                soldAt: item.sale.soldAt ? toDateInput(item.sale.soldAt) : "",
+                notes: item.sale.notes ?? "",
+              }
+            : null
+        }
+      />
+      {/* key: recarrega o formulário quando o item muda fora dele (ex.: venda registrada), para não salvar status antigo */}
       <ItemForm
+        key={item.updatedAt.toISOString()}
         conditions={(await getSettings()).t.conditions.split("\n").map((c) => c.trim()).filter(Boolean)}
         categories={categories}
         initial={{

@@ -30,6 +30,7 @@ export function SaleDialog({
   itemTitle,
   listPrice,
   initial,
+  markSold = false,
   onClose,
   onSaved,
 }: {
@@ -37,6 +38,8 @@ export function SaleDialog({
   itemTitle: string
   listPrice: number
   initial: SaleValues | null
+  /** Item ainda disponível: ao salvar, também marca como vendido. */
+  markSold?: boolean
   onClose: () => void
   onSaved: () => void
 }) {
@@ -63,11 +66,12 @@ export function SaleDialog({
   async function save() {
     setSaving(true)
     try {
+      if (markSold) await adminFetch(`/api/admin/items/${itemId}`, "PUT", { status: "vendido" })
       await adminFetch(`/api/admin/items/${itemId}/sale`, "PUT", {
         ...v,
         finalPrice: v.finalPrice === "" ? null : Number(v.finalPrice),
       })
-      toast.success("Dados da venda salvos")
+      toast.success(markSold ? "Venda registrada: item marcado como vendido" : "Dados da venda salvos")
       onSaved()
     } catch (e) {
       toast.error((e as Error).message)
@@ -197,7 +201,7 @@ export function SaleDialog({
           </Button>
           <Button className="h-11 rounded-full font-semibold" disabled={saving} onClick={save}>
             {saving && <Loader2 className="animate-spin" />}
-            Salvar venda
+            {markSold ? "Registrar venda" : "Salvar venda"}
           </Button>
         </div>
       </div>
