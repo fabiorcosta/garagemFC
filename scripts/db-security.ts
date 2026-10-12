@@ -30,7 +30,9 @@ const db = new PrismaClient({ datasourceUrl: url })
 
 const CATALOG = ["Category", "Item", "ItemPhoto", "SiteSettings"]
 const BUSINESS = [...CATALOG, "ContactMessage"]
-const ALL_TABLES = [...BUSINESS, "User", "RateLimit"]
+// Tabelas só do admin: o visitante não tem GRANT nenhum (dados privados da venda)
+const ADMIN_ONLY = ["Sale"]
+const ALL_TABLES = [...BUSINESS, ...ADMIN_ONLY, "User", "RateLimit"]
 const ROLES = Object.keys(PASSWORDS)
 
 const statements: string[] = [
@@ -71,7 +73,7 @@ const statements: string[] = [
   `REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM PUBLIC, garagem_public, garagem_admin`,
   `GRANT SELECT ON ${CATALOG.map((t) => `"${t}"`).join(", ")} TO garagem_public`,
   `GRANT INSERT ON "ContactMessage" TO garagem_public`,
-  `GRANT SELECT, INSERT, UPDATE, DELETE ON ${BUSINESS.map((t) => `"${t}"`).join(", ")} TO garagem_admin`,
+  `GRANT SELECT, INSERT, UPDATE, DELETE ON ${[...BUSINESS, ...ADMIN_ONLY].map((t) => `"${t}"`).join(", ")} TO garagem_admin`,
 
   ...ALL_TABLES.flatMap((t) => [
     `ALTER TABLE "${t}" ENABLE ROW LEVEL SECURITY`,
@@ -85,7 +87,7 @@ const statements: string[] = [
   // Visitante só cria mensagem nova, não lida, e com o aceite do aviso de garantia registrado
   `CREATE POLICY gar_public_insert ON "ContactMessage" FOR INSERT TO garagem_public
      WITH CHECK ("read" = false AND "disclaimerAcceptedAt" IS NOT NULL AND "disclaimerVersion" IS NOT NULL)`,
-  ...BUSINESS.map((t) => `CREATE POLICY gar_admin_all ON "${t}" FOR ALL TO garagem_admin USING (true) WITH CHECK (true)`),
+  ...[...BUSINESS, ...ADMIN_ONLY].map((t) => `CREATE POLICY gar_admin_all ON "${t}" FOR ALL TO garagem_admin USING (true) WITH CHECK (true)`),
 
   // Login: devolve só o registro do e-mail pedido
   `CREATE OR REPLACE FUNCTION auth_find_user(p_email text)
@@ -142,6 +144,11 @@ async function main() {
     SELECT count(*) AS n FROM information_schema.role_table_grants
     WHERE table_schema = 'public' AND table_name IN ('User', 'RateLimit') AND grantee IN ('garagem_public', 'garagem_admin', 'PUBLIC')`
   if (userGrants[0].n > BigInt(0)) throw new Error("Tabelas User/RateLimit com acesso direto concedido")
+
+  const publicSale = await db.$queryRaw<{ n: bigint }[]>`
+    SELECT count(*) AS n FROM information_schema.role_table_grants
+    WHERE table_schema = 'public' AND table_name = 'Sale' AND grantee IN ('garagem_public', 'PUBLIC')`
+  if (publicSale[0].n > BigInt(0)) throw new Error("Tabela Sale acessível ao visitante")
 
   console.log(`Segurança do banco ok: RLS forçado em ${tables.length} tabelas; papéis garagem_public e garagem_admin restritos.`)
 }

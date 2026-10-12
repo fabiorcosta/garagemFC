@@ -56,6 +56,7 @@ model Item {
   category      Category?        @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   photos        ItemPhoto[]
   messages      ContactMessage[]
+  sale          Sale?
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
 
@@ -119,4 +120,21 @@ model RateLimit {
   key         String   @id
   windowStart DateTime @default(now())
   count       Int      @default(0)
+}
+
+/// Registro privado da venda (só admin). Tabela separada: o papel garagem_public não tem nenhum acesso a ela.
+model Sale {
+  id            String   @id @default(cuid())
+  itemId        String   @unique
+  item          Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  buyerName     String?
+  soldBy        String?
+  finalPrice    Float?
+  paidPercent   Int      @default(0)
+  /// "pix" | "dinheiro" | "transferencia" | "cartao" | "outro"
+  paymentMethod String?
+  soldAt        DateTime?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }

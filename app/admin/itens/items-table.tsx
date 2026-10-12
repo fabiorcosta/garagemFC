@@ -4,7 +4,9 @@ import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Copy, Eye, EyeOff, ExternalLink, ImageOff, Pencil, Star, Trash2 } from "lucide-react"
+import { Copy, Eye, EyeOff, ExternalLink, ImageOff, Pencil, Receipt, Star, Trash2 } from "lucide-react"
+import { SaleDialog } from "@/components/admin/sale-dialog"
+import { PAYMENT_LABEL, paymentStatusLabel, type SaleValues } from "@/lib/sale-shared"
 import { toast } from "sonner"
 import { ConfirmDialog } from "@/components/admin/confirm-dialog"
 import { cn } from "@/lib/utils"
@@ -23,6 +25,7 @@ type Row = {
   published: boolean
   photoCount: number
   pickup: string | null
+  sale: SaleValues | null
 }
 
 const statusBtn: Record<ItemStatus, string> = {
@@ -35,6 +38,8 @@ export function ItemsTable({ rows }: { rows: Row[] }) {
   const router = useRouter()
   const [filter, setFilter] = useState<"" | ItemStatus | "rascunho">("")
   const [busy, setBusy] = useState<string | null>(null)
+  const [saleFor, setSaleFor] = useState<string | null>(null)
+  const saleRow = rows.find((r) => r.id === saleFor)
   const matches = (r: Row, f: typeof filter) => (f === "rascunho" ? !r.published : f ? r.status === f : true)
   const visible = rows.filter((r) => matches(r, filter))
 
@@ -44,6 +49,8 @@ export function ItemsTable({ rows }: { rows: Row[] }) {
       await adminFetch(`/api/admin/items/${id}`, "PUT", { status })
       toast.success(`Marcado como ${STATUS_LABEL[status].toLowerCase()}`)
       router.refresh()
+      // Vendido ou reservado: já abre os dados da venda (comprador, pagamento)
+      if (status !== "disponivel") setSaleFor(id)
     } catch (e) {
       toast.error((e as Error).message)
     } finally {
@@ -133,6 +140,25 @@ export function ItemsTable({ rows }: { rows: Row[] }) {
                   <span className="font-semibold text-foreground">{formatPrice(r.price)}</span>
                   {r.category && <span>· {r.category}</span>}
                   {r.pickup && <span>· retira a partir de {r.pickup}</span>}
+                  {r.status !== "disponivel" && (
+                    <button
+                      type="button"
+                      onClick={() => setSaleFor(r.id)}
+                      className={cn(
+                        "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase",
+                        !r.sale
+                          ? "bg-muted text-muted-foreground"
+                          : r.sale.paidPercent >= 100
+                            ? "bg-olive text-olive-foreground"
+                            : "bg-terracotta-soft text-primary",
+                      )}
+                      title="Dados da venda"
+                    >
+                      {r.sale
+                        ? `${paymentStatusLabel(r.sale.paidPercent)}${r.sale.paymentMethod ? ` · ${PAYMENT_LABEL[r.sale.paymentMethod]}` : ""}${r.sale.buyerName ? ` · ${r.sale.buyerName}` : ""}`
+                        : "+ dados da venda"}
+                    </button>
+                  )}
                   <span className={r.photoCount === 0 ? "font-semibold text-destructive" : ""}>
                     · {r.photoCount} {r.photoCount === 1 ? "foto" : "fotos"}
                   </span>
@@ -167,6 +193,16 @@ export function ItemsTable({ rows }: { rows: Row[] }) {
                 >
                   {r.published ? <Eye className="size-4" /> : <EyeOff className="size-4 text-amber" />}
                 </button>
+                {r.status !== "disponivel" && (
+                  <button
+                    onClick={() => setSaleFor(r.id)}
+                    className="rounded-full p-2 hover:bg-muted"
+                    aria-label="Dados da venda"
+                    title="Dados da venda"
+                  >
+                    <Receipt className="size-4" />
+                  </button>
+                )}
                 <button
                   onClick={() => duplicate(r.id)}
                   disabled={busy === r.id}
@@ -200,6 +236,20 @@ export function ItemsTable({ rows }: { rows: Row[] }) {
           </li>
         ))}
       </ul>
+      {saleRow && (
+        <SaleDialog
+          key={saleRow.id}
+          itemId={saleRow.id}
+          itemTitle={saleRow.title}
+          listPrice={saleRow.price}
+          initial={saleRow.sale}
+          onClose={() => setSaleFor(null)}
+          onSaved={() => {
+            setSaleFor(null)
+            router.refresh()
+          }}
+        />
+      )}
     </div>
   )
 }

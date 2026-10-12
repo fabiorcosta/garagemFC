@@ -9,7 +9,7 @@ import { getStatusCounts } from "@/lib/queries"
 
 export default async function DashboardPage() {
   const { db } = await adminPageContext()
-  const [counts, drafts, unread, latestItems, latestMessages] = await Promise.all([
+  const [counts, drafts, unread, latestItems, latestMessages, sales] = await Promise.all([
     getStatusCounts(), // contagem pública: só itens publicados
     db.item.count({ where: { published: false } }),
     db.contactMessage.count({ where: { read: false } }),
@@ -19,7 +19,15 @@ export default async function DashboardPage() {
       take: 5,
       include: { item: { select: { title: true } } },
     }),
+    db.sale.findMany({
+      where: { item: { status: { in: ["vendido", "reservado"] } } },
+      select: { finalPrice: true, paidPercent: true, item: { select: { price: true } } },
+    }),
   ])
+  // Valor de cada venda = valor combinado (ou o preço do anúncio, se não informado)
+  const saleValue = (s: (typeof sales)[number]) => s.finalPrice ?? s.item.price
+  const received = sales.reduce((sum, s) => sum + (saleValue(s) * s.paidPercent) / 100, 0)
+  const pending = sales.reduce((sum, s) => sum + (saleValue(s) * (100 - s.paidPercent)) / 100, 0)
   const total = counts.disponivel + counts.reservado + counts.vendido
 
   return (
@@ -39,6 +47,17 @@ export default async function DashboardPage() {
         <Metric label="Reservados" value={counts.reservado} className="bg-amber-soft text-[#8A5A0B]" />
         <Metric label="Vendidos" value={counts.vendido} className="bg-terracotta-soft text-primary" />
         <Metric label="Mensagens novas" value={unread} href="/admin/mensagens" />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="flex flex-col gap-1 rounded-2xl border bg-olive-soft p-4 text-olive">
+          <span className="text-2xl font-extrabold sm:text-3xl">{formatPrice(received)}</span>
+          <span className="text-xs font-semibold">Já recebido</span>
+        </div>
+        <div className="flex flex-col gap-1 rounded-2xl border bg-terracotta-soft p-4 text-primary">
+          <span className="text-2xl font-extrabold sm:text-3xl">{formatPrice(pending)}</span>
+          <span className="text-xs font-semibold">A receber (vendidos e reservados)</span>
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">

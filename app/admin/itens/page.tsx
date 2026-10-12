@@ -4,7 +4,8 @@ import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { adminPageContext } from "@/lib/admin-auth"
 import { photoThumbUrl } from "@/lib/file-url"
-import { pickupLabel } from "@/lib/pickup-date"
+import { pickupLabel, toDateInput } from "@/lib/pickup-date"
+import type { SaleValues } from "@/lib/sale-shared"
 import { ItemsTable } from "./items-table"
 
 export default async function AdminItemsPage() {
@@ -15,6 +16,9 @@ export default async function AdminItemsPage() {
       category: { select: { name: true } },
       photos: { orderBy: { sortOrder: "asc" }, take: 1 },
       _count: { select: { photos: true } },
+      sale: {
+        select: { buyerName: true, soldBy: true, finalPrice: true, paidPercent: true, paymentMethod: true, soldAt: true, notes: true },
+      },
     },
   })
   const rows = items.map((i) => ({
@@ -29,6 +33,17 @@ export default async function AdminItemsPage() {
     published: i.published,
     pickup: pickupLabel(i.pickupFrom, "short"),
     photoCount: i._count.photos,
+    sale: i.sale
+      ? {
+          buyerName: i.sale.buyerName ?? "",
+          soldBy: i.sale.soldBy ?? "",
+          finalPrice: i.sale.finalPrice ?? ("" as const),
+          paidPercent: i.sale.paidPercent,
+          paymentMethod: (i.sale.paymentMethod ?? "") as SaleValues["paymentMethod"],
+          soldAt: i.sale.soldAt ? toDateInput(i.sale.soldAt) : "",
+          notes: i.sale.notes ?? "",
+        }
+      : null,
   }))
 
   return (
