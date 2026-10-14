@@ -56,6 +56,8 @@ export default async function ItemPage(props: PageProps<"/itens/[slug]">) {
   const t = settings.t
   const reference = safeHttpsUrl(item.referenceUrl)
   const pickup = pickupLabel(item.pickupFrom)
+  // Contexto do aviso de compra: data de retirada deste item (null = imediata) e valor
+  const buyCtx = { pickup, price: item.price }
   const usage = formatUsage(item.usageMonths)
   const waMessage = fill(t.whatsappItemMessage, { item: item.title, link: url })
 
@@ -132,6 +134,7 @@ export default async function ItemPage(props: PageProps<"/itens/[slug]">) {
               <WhatsAppButton
                 phone={settings.whatsapp}
                 itemName={item.title}
+                item={buyCtx}
                 label={t.whatsappButton}
                 message={waMessage}
               />
@@ -145,6 +148,7 @@ export default async function ItemPage(props: PageProps<"/itens/[slug]">) {
             itemId={item.id}
             itemTitle={item.title}
             status={item.status}
+            item={buyCtx}
             texts={{
               title: t.contactTitle,
               message: fill(t.contactMessage, { item: item.title }),
@@ -168,6 +172,7 @@ export default async function ItemPage(props: PageProps<"/itens/[slug]">) {
           floating
           phone={settings.whatsapp}
           itemName={item.title}
+          item={buyCtx}
           label="WhatsApp"
           message={waMessage}
           className="md:hidden"

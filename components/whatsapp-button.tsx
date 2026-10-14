@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils"
 import { whatsappLink } from "@/lib/format"
 import { track } from "@/lib/gtag"
-import { useDisclaimer } from "./disclaimer"
+import { useDisclaimer, type ItemContext } from "./disclaimer"
 
 export function WhatsAppIcon({ className }: { className?: string }) {
   return (
@@ -19,6 +19,7 @@ export function WhatsAppButton({
   label = "Chamar no WhatsApp",
   floating = false,
   itemName,
+  item,
   className,
 }: {
   phone: string
@@ -26,6 +27,8 @@ export function WhatsAppButton({
   label?: string
   floating?: boolean
   itemName?: string
+  /** Item da página: mostra a data de retirada e o valor no aviso */
+  item?: ItemContext
   className?: string
 }) {
   const disclaimer = useDisclaimer()
@@ -47,7 +50,7 @@ export function WhatsAppButton({
         disclaimer.confirm(() => {
           track("contact_whatsapp", itemName ? { item_name: itemName } : {})
           window.open(whatsappLink(phone, `${message}\n\n${disclaimer.texts.whatsappNote}`), "_blank", "noopener,noreferrer")
-        })
+        }, item)
       }}
       className={cn(
         "inline-flex items-center justify-center gap-2 rounded-full bg-[#25D366] font-semibold text-[#08331A] shadow-lg transition hover:brightness-95 active:scale-[0.98]",

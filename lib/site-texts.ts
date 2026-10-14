@@ -82,7 +82,7 @@ export const TEXTS = {
     default: [
       "Este item é usado e vendido no estado em que se encontra, por pessoa física, por motivo de mudança.",
       "Não é oferecida nenhuma garantia de funcionamento futuro, de durabilidade ou de continuidade de uso após a entrega.",
-      "O estado do item e os defeitos conhecidos estão descritos no anúncio e mostrados nas fotos. Tire suas dúvidas antes de comprar e examine o item no momento da retirada.",
+      "Tire suas dúvidas antes de comprar e examine o item no momento da retirada.",
       "Este aviso não afasta direitos que a lei eventualmente assegure ao comprador, como os previstos nos arts. 441 a 446 do Código Civil (Lei nº 10.406/2002) para vícios ou defeitos ocultos.",
     ].join("\n\n"),
   },
@@ -93,6 +93,17 @@ export const TEXTS = {
     max: 300,
     multiline: true,
   },
+  pickupHighlight: {
+    group: "aviso",
+    label: "Destaque da retirada (item com data)",
+    default: "Retirada deste item: a partir de {data}",
+    max: 120,
+    hint: "{data} = data de retirada do item. Aparece em vermelho no aviso.",
+  },
+  pickupHighlightNow: { group: "aviso", label: "Destaque da retirada (item sem data)", default: "Retirada deste item: imediata", max: 120 },
+  pixTitle: { group: "aviso", label: "Título do Pix", default: "Pagamento via Pix", max: 60 },
+  pixReserveNote: { group: "aviso", label: "Texto da reserva", default: "O pagamento garante a reserva do item.", max: 200, multiline: true },
+  pixAfter: { group: "aviso", label: "Depois de pagar", default: "Depois de pagar, envie o comprovante pelo WhatsApp.", max: 200, multiline: true },
   disclaimerConfirm: { group: "aviso", label: "Botão de continuar", default: "Estou ciente, continuar", max: 40 },
   disclaimerWhatsappNote: {
     group: "aviso",

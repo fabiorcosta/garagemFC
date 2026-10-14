@@ -8,18 +8,20 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { track } from "@/lib/gtag"
-import { useDisclaimer } from "@/components/disclaimer"
+import { useDisclaimer, type ItemContext } from "@/components/disclaimer"
 
 export function ContactForm({
   itemId,
   itemTitle,
   status,
   texts,
+  item,
 }: {
   itemId: string
   itemTitle: string
   status: string
   texts: { title: string; message: string; success: string; sold: string; reserved: string }
+  item?: ItemContext
 }) {
   const [sending, setSending] = useState(false)
   const [sent, setSent] = useState(false)
@@ -55,7 +57,7 @@ export function ContactForm({
     }
     if (!disclaimer) return
     // Aviso de garantia à frente; o servidor só aceita a mensagem com o aceite e a versão do texto
-    disclaimer.confirm(() => send({ ...payload, disclaimerAccepted: true, disclaimerVersion: disclaimer.texts.version }))
+    disclaimer.confirm(() => send({ ...payload, disclaimerAccepted: true, disclaimerVersion: disclaimer.texts.version }), item)
   }
 
   async function send(payload: Record<string, FormDataEntryValue | boolean>) {

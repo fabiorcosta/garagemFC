@@ -1,8 +1,10 @@
 "use client"
 
 import { createContext, useContext, useEffect, useRef, useState } from "react"
-import { ShieldAlert } from "lucide-react"
+import { CalendarClock, Check, Copy, ShieldAlert } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { formatPrice } from "@/lib/format"
+import { PIX_BRCODE, PIX_KEY, PIX_QR_IMAGE } from "@/lib/pix"
 
 export type DisclaimerTexts = {
   title: string
@@ -11,12 +13,20 @@ export type DisclaimerTexts = {
   confirm: string
   whatsappNote: string
   version: string
+  pickupHighlight: string
+  pickupHighlightNow: string
+  pixTitle: string
+  pixReserveNote: string
+  pixAfter: string
 }
+
+/** Dados do item que abriu o aviso (data de retirada já formatada; null = imediata). */
+export type ItemContext = { pickup: string | null; price: number } | null
 
 type Ctx = {
   texts: DisclaimerTexts
   /** Abre o aviso; `onAccept` roda no clique de "continuar" (mantém o gesto do usuário, sem bloqueio de pop-up). */
-  confirm: (onAccept: () => void) => void
+  confirm: (onAccept: () => void, item?: ItemContext) => void
 }
 
 const DisclaimerContext = createContext<Ctx | null>(null)
@@ -32,6 +42,7 @@ export function useDisclaimer() {
  */
 export function DisclaimerProvider({ texts, children }: { texts: DisclaimerTexts; children: React.ReactNode }) {
   const [pending, setPending] = useState<(() => void) | null>(null)
+  const [item, setItem] = useState<ItemContext>(null)
   const [checked, setChecked] = useState(false)
   const dialog = useRef<HTMLDivElement>(null)
 
@@ -55,7 +66,15 @@ export function DisclaimerProvider({ texts, children }: { texts: DisclaimerTexts
   }, [open])
 
   return (
-    <DisclaimerContext.Provider value={{ texts, confirm: (fn) => setPending(() => fn) }}>
+    <DisclaimerContext.Provider
+      value={{
+        texts,
+        confirm: (fn, it) => {
+          setItem(it ?? null)
+          setPending(() => fn)
+        },
+      }}
+    >
       {children}
       {open && (
         <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/50 p-3 sm:items-center" onClick={close}>
@@ -76,6 +95,12 @@ export function DisclaimerProvider({ texts, children }: { texts: DisclaimerTexts
                 {texts.title}
               </h2>
             </div>
+            {item && (
+              <p className="flex items-center gap-2 rounded-2xl border-2 border-destructive/40 bg-destructive/10 px-4 py-3 text-base font-bold text-destructive">
+                <CalendarClock className="size-5 shrink-0" aria-hidden />
+                {item.pickup ? texts.pickupHighlight.replace("{data}", item.pickup) : texts.pickupHighlightNow}
+              </p>
+            )}
             <p className="text-[15px] leading-relaxed whitespace-pre-line text-foreground/85">{texts.body}</p>
             <label className="flex cursor-pointer items-start gap-3 rounded-2xl border-2 border-dashed p-3 text-sm font-medium has-[:checked]:border-solid has-[:checked]:border-olive has-[:checked]:bg-olive-soft">
               <input
@@ -86,6 +111,7 @@ export function DisclaimerProvider({ texts, children }: { texts: DisclaimerTexts
               />
               {texts.checkbox}
             </label>
+            <PixBlock texts={texts} price={item?.price ?? null} />
             <div className="grid grid-cols-2 gap-2">
               <Button variant="outline" className="h-11 rounded-full" onClick={close}>
                 Voltar
@@ -122,5 +148,79 @@ export function DisclaimerNotice() {
       </summary>
       <p className="mt-3 leading-relaxed whitespace-pre-line text-foreground/85">{ctx.texts.body}</p>
     </details>
+  )
+}
+
+/** Pix: QR (para pagar de outro aparelho) + "copia e cola" e chave com botão de copiar (para pagar no mesmo celular). */
+function PixBlock({ texts, price }: { texts: DisclaimerTexts; price: number | null }) {
+  return (
+    <section className="flex flex-col gap-3 rounded-2xl border bg-muted/40 p-4" aria-labelledby="pix-title">
+      <div>
+        <h3 id="pix-title" className="font-bold">
+          {texts.pixTitle}
+          {price != null && <span className="font-semibold text-primary"> · {formatPrice(price)}</span>}
+        </h3>
+        <p className="text-sm font-semibold">{texts.pixReserveNote}</p>
+      </div>
+      {/* eslint-disable-next-line @next/next/no-img-element -- QR estático, já otimizado (~40 KB) */}
+      <img
+        src={PIX_QR_IMAGE}
+        alt="QR code Pix para pagamento"
+        width={200}
+        height={200}
+        className="mx-auto size-48 rounded-xl bg-white p-1"
+      />
+      <CopyField label="Pix copia e cola (para pagar pelo celular)" value={PIX_BRCODE} buttonLabel="Copiar código" />
+      <CopyField label="Chave Pix" value={PIX_KEY} buttonLabel="Copiar chave" />
+      <p className="text-xs text-muted-foreground">{texts.pixAfter}</p>
+    </section>
+  )
+}
+
+function CopyField({ label, value, buttonLabel }: { label: string; value: string; buttonLabel: string }) {
+  const [state, setState] = useState<"idle" | "copied" | "manual">("idle")
+  const field = useRef<HTMLInputElement>(null)
+  const copied = state === "copied"
+
+  async function copy() {
+    let ok = false
+    try {
+      await navigator.clipboard.writeText(value)
+      ok = true
+    } catch {
+      // Área de transferência bloqueada: seleciona o texto e tenta o método antigo
+      field.current?.focus()
+      field.current?.select()
+      try {
+        ok = document.execCommand("copy")
+      } catch {
+        ok = false
+      }
+    }
+    setState(ok ? "copied" : "manual")
+    if (ok) setTimeout(() => setState("idle"), 2500)
+  }
+
+  return (
+    <div className="grid gap-1">
+      <span className="text-xs font-semibold text-muted-foreground">{label}</span>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <input
+          ref={field}
+          readOnly
+          value={value}
+          onFocus={(e) => e.currentTarget.select()}
+          className="h-10 w-full min-w-0 flex-1 rounded-lg border bg-card px-3 font-mono text-xs"
+          aria-label={label}
+        />
+        <Button type="button" variant={copied ? "secondary" : "default"} className="h-11 shrink-0 rounded-lg sm:h-10" onClick={copy}>
+          {copied ? <Check /> : <Copy />}
+          {copied ? "Copiado!" : buttonLabel}
+        </Button>
+      </div>
+      {state === "manual" && (
+        <span className="text-xs font-medium text-primary">Texto selecionado: toque e segure no campo para copiar.</span>
+      )}
+    </div>
   )
 }

@@ -28,6 +28,11 @@ export default async function SiteLayout({ children }: LayoutProps<"/">) {
           confirm: settings.t.disclaimerConfirm,
           whatsappNote: settings.t.disclaimerWhatsappNote,
           version: disclaimerVersion(settings.t),
+          pickupHighlight: settings.t.pickupHighlight,
+          pickupHighlightNow: settings.t.pickupHighlightNow,
+          pixTitle: settings.t.pixTitle,
+          pixReserveNote: settings.t.pixReserveNote,
+          pixAfter: settings.t.pixAfter,
         }}
       >
         <main className="mx-auto w-full max-w-6xl flex-1 px-4">{children}</main>
