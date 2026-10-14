@@ -47,12 +47,18 @@ export function ItemCard({ item, priority = false }: { item: ItemCardData; prior
         <div className="mt-auto flex flex-col gap-1.5">
           <Price price={item.price} originalPrice={item.originalPrice} />
           {item.acceptsOffers && !sold && <OffersBadge className="self-start" />}
-          {pickup && !sold && (
-            <span className="inline-flex items-center gap-1 self-start text-[11px] font-medium text-muted-foreground">
-              <CalendarClock className="size-3" aria-hidden />
-              Retirada a partir de {pickup}
-            </span>
-          )}
+          {!sold &&
+            (pickup ? (
+              <span className="inline-flex items-center gap-1 self-start text-[13px] leading-tight font-bold text-destructive">
+                <CalendarClock className="size-3.5 shrink-0" aria-hidden />
+                Retirada a partir de {pickup}
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 self-start text-[11px] font-medium text-olive">
+                <CalendarClock className="size-3 shrink-0" aria-hidden />
+                Retirada imediata
+              </span>
+            ))}
         </div>
       </div>
     </Link>

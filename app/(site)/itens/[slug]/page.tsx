@@ -100,12 +100,18 @@ export default async function ItemPage(props: PageProps<"/itens/[slug]">) {
             )}
           </div>
 
-          {item.status !== "vendido" && (
-            <p className="flex items-center gap-2 rounded-xl bg-muted px-3 py-2 text-sm">
-              <CalendarClock className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-              <span className="font-semibold">{pickup ? fill(t.pickupLater, { data: pickup }) : t.pickupNow}</span>
-            </p>
-          )}
+          {item.status !== "vendido" &&
+            (pickup ? (
+              <p className="flex items-center gap-2 rounded-xl border-2 border-destructive/40 bg-destructive/10 px-3 py-2.5 text-base font-bold text-destructive">
+                <CalendarClock className="size-5 shrink-0" aria-hidden />
+                <span>{fill(t.pickupLater, { data: pickup })}</span>
+              </p>
+            ) : (
+              <p className="flex items-center gap-2 rounded-xl bg-olive-soft px-3 py-2 text-sm font-semibold text-olive">
+                <CalendarClock className="size-4 shrink-0" aria-hidden />
+                <span>{t.pickupNow}</span>
+              </p>
+            ))}
 
           {usage && (
             <p className="flex items-center gap-2 rounded-xl bg-muted px-3 py-2 text-sm">
