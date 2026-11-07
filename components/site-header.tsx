@@ -11,9 +11,8 @@ export function SiteHeader({ title, announcement }: { title: string; announcemen
       )}
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4">
         <Link href="/" className="flex items-center gap-2 text-lg font-extrabold tracking-tight">
-          <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-sm text-primary-foreground">
-            G
-          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element -- logo estático de 3 KB */}
+          <img src="/logo.png" alt="" width={36} height={36} className="size-9 rounded-lg" />
           {title}
         </Link>
         <nav className="flex items-center gap-1 text-sm font-medium">
