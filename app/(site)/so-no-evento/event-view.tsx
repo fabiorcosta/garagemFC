@@ -1,34 +1,42 @@
 import Link from "next/link"
-import { CalendarDays, Clock, MapPin } from "lucide-react"
+import { CalendarDays, Clock, Info, MapPin } from "lucide-react"
 import { EventPhoto } from "@/components/event-photo"
 import { WhatsAppButton, WhatsAppIcon } from "@/components/whatsapp-button"
 import { formatPrice } from "@/lib/format"
-import { eventoInfo, type EventoGrupo } from "@/lib/so-no-evento"
-
-const { evento, contato } = eventoInfo
-const dia = evento.data.slice(0, 5)
+import { contato, type EventoDados, type EventoGrupo } from "@/lib/so-no-evento"
 
 /** Página pública só por link (anúncios). Não entra no menu, no catálogo nem em buscadores. */
-export function EventView({ grupos, destaque }: { grupos: EventoGrupo[]; destaque?: string }) {
+export function EventView({ grupos, evento, destaque }: { grupos: EventoGrupo[]; evento: EventoDados; destaque?: string }) {
+  const noDia = evento.dia ? `no dia ${evento.dia}` : "no dia do evento"
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-8 py-6 sm:py-8">
       <header className="flex flex-col gap-3 rounded-2xl bg-terracotta-soft p-5">
         <div>
-          <h1 className="text-2xl font-extrabold text-primary sm:text-3xl">Só no Evento — {dia}</h1>
+          <h1 className="text-2xl font-extrabold text-primary sm:text-3xl">Só no Evento{evento.dia ? ` — ${evento.dia}` : ""}</h1>
           <p className="mt-1 text-sm font-medium">Itens disponíveis apenas no dia do evento presencial</p>
         </div>
         <ul className="flex flex-col gap-1.5 text-sm">
           <li className="flex items-center gap-2">
             <CalendarDays className="size-4 shrink-0 text-primary" aria-hidden />
-            <span className="font-semibold">{evento.data}</span>
-            <Clock className="ml-1 size-4 shrink-0 text-primary" aria-hidden />
-            <span className="font-semibold">{evento.horario}</span>
+            <span className="font-semibold">{evento.data ?? "Data a confirmar"}</span>
+            {evento.horario && (
+              <>
+                <Clock className="ml-1 size-4 shrink-0 text-primary" aria-hidden />
+                <span className="font-semibold">{evento.horario}</span>
+              </>
+            )}
           </li>
           <li className="flex items-start gap-2">
             <MapPin className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
-            <span>{evento.local}</span>
+            <span>{evento.local ?? "Local a confirmar"}</span>
           </li>
         </ul>
+        {evento.instrucoes && (
+          <div className="flex items-start gap-2 border-t border-primary/15 pt-3 text-sm">
+            <Info className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
+            <p className="whitespace-pre-line">{evento.instrucoes}</p>
+          </div>
+        )}
       </header>
 
       {grupos.length === 0 && (
@@ -64,7 +72,7 @@ export function EventView({ grupos, destaque }: { grupos: EventoGrupo[]; destaqu
                   {item.descricao && <p className="text-xs text-muted-foreground">{item.descricao}</p>}
                   <p className="inline-flex items-center gap-1 text-[13px] font-bold text-destructive">
                     <CalendarDays className="size-3.5 shrink-0" aria-hidden />
-                    Disponível apenas no dia {dia}
+                    Disponível apenas {noDia}
                   </p>
                   {!item.vendido && (
                     <WhatsAppButton

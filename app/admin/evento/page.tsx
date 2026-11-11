@@ -3,10 +3,17 @@ import { eventItemFields } from "@/lib/event-item-service"
 import { getFileUrl } from "@/lib/file-url"
 import { siteUrl } from "@/lib/format"
 import { EventManager } from "./event-manager"
+import { EventSettingsForm } from "./event-settings-form"
 
 export default async function EventAdminPage() {
   const { db } = await adminPageContext()
-  const items = await db.eventItem.findMany({ orderBy: [{ group: "asc" }, { createdAt: "asc" }], select: eventItemFields })
+  const [items, settings] = await Promise.all([
+    db.eventItem.findMany({ orderBy: [{ group: "asc" }, { createdAt: "asc" }], select: eventItemFields }),
+    db.siteSettings.findUnique({
+      where: { id: "main" },
+      select: { eventDate: true, eventStart: true, eventEnd: true, eventPlace: true, eventInstructions: true },
+    }),
+  ])
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -16,6 +23,9 @@ export default async function EventAdminPage() {
           nem no catálogo: só quem tem o link chega lá. Cada grupo leva até 3 itens e tem um link próprio para usar no anúncio.
         </p>
       </div>
+      <EventSettingsForm
+        initial={settings ?? { eventDate: "", eventStart: "", eventEnd: "", eventPlace: "", eventInstructions: "" }}
+      />
       <EventManager
         baseUrl={`${siteUrl()}/so-no-evento`}
         items={items.map((i) => ({ ...i, preview: getFileUrl(i.thumbPath) ?? getFileUrl(i.photoPath) }))}

@@ -71,3 +71,22 @@ export async function assertPhotoKeysFree(tx: Tx, keys: (string | null)[], ignor
   ])
   if (catalog || event) throw new ValidationError("Foto já usada em outro item")
 }
+
+const hhmm = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Horário inválido")
+const isRealDate = (v: string) => {
+  const d = new Date(`${v}T12:00:00Z`)
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === v
+}
+
+/** Dados do evento presencial (data, horário, local, instruções). Tudo texto puro. */
+export const eventSettingsSchema = z
+  .strictObject({
+    eventDate: z
+      .string()
+      .refine((v) => v === "" || (/^\d{4}-\d{2}-\d{2}$/.test(v) && isRealDate(v) && v >= "2026-01-01" && v <= "2027-12-31"), "Data inválida"),
+    eventStart: z.union([z.literal(""), hhmm]),
+    eventEnd: z.union([z.literal(""), hhmm]),
+    eventPlace: z.string().trim().max(160, "Local: no máximo 160 caracteres"),
+    eventInstructions: z.string().trim().max(600, "Instruções: no máximo 600 caracteres"),
+  })
+  .refine((d) => !d.eventStart || !d.eventEnd || d.eventEnd > d.eventStart, "O horário de término precisa ser depois do início")

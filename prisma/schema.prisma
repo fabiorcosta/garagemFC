@@ -112,6 +112,13 @@ model SiteSettings {
   showStats          Boolean   @default(true)
   /// Textos editáveis do site (chaves em lib/site-texts.ts); vazio = texto padrão
   texts              Json      @default("{}")
+  /// Evento presencial (página /so-no-evento e peças de divulgação). Editado em /admin/evento.
+  /// eventDate "AAAA-MM-DD"; horários "HH:MM"; vazio = ainda não definido.
+  eventDate          String    @default("")
+  eventStart         String    @default("")
+  eventEnd           String    @default("")
+  eventPlace         String    @default("")
+  eventInstructions  String    @default("")
   updatedAt          DateTime  @updatedAt
 }
 
