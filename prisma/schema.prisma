@@ -137,3 +137,25 @@ model Sale {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
+
+/// Itens "só no evento" (página /so-no-evento, aberta só por link de anúncio).
+/// Tabela separada do catálogo de propósito: nenhuma consulta do catálogo os enxerga.
+model EventItem {
+  id          String   @id @default(cuid())
+  /// Grupo do anúncio: /so-no-evento/grupo-N (1 a 99, no máximo 3 itens por grupo — conferido na rota)
+  group       Int
+  name        String
+  /// Reais inteiros. Sem preço antigo/riscado: regra do dono.
+  price       Int
+  description String   @default("")
+  /// Chaves no bucket (items/<uuid>-full|thumb.ext); null = sem foto
+  photoPath   String?
+  thumbPath   String?
+  sold        Boolean  @default(false)
+  /// false = rascunho: invisível ao público (garantido também por RLS no papel garagem_public)
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([group])
+}

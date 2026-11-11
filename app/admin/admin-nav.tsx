@@ -3,12 +3,13 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { signOut } from "next-auth/react"
-import { ExternalLink, FolderTree, LayoutDashboard, LogOut, MessageSquare, Package, Settings } from "lucide-react"
+import { ExternalLink, FolderTree, LayoutDashboard, LogOut, MessageSquare, Package, PartyPopper, Settings } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const links = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/itens", label: "Itens", icon: Package },
+  { href: "/admin/evento", label: "Só no evento", icon: PartyPopper },
   { href: "/admin/categorias", label: "Categorias", icon: FolderTree },
   { href: "/admin/mensagens", label: "Mensagens", icon: MessageSquare },
   { href: "/admin/configuracoes", label: "Configurações", icon: Settings },
@@ -75,7 +76,7 @@ export function AdminNav({ unread }: { unread: number }) {
           </button>
         </div>
       </header>
-      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t bg-card pb-[env(safe-area-inset-bottom)] md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-6 border-t bg-card pb-[env(safe-area-inset-bottom)] md:hidden">
         {links.map(({ href, label, icon: Icon, exact }) => (
           <Link
             key={href}
@@ -86,7 +87,7 @@ export function AdminNav({ unread }: { unread: number }) {
             )}
           >
             <Icon className="size-5" />
-            {label === "Configurações" ? "Ajustes" : label}
+            {label === "Configurações" ? "Ajustes" : label === "Só no evento" ? "Evento" : label === "Categorias" ? "Categ." : label}
             {href === "/admin/mensagens" && unread > 0 && (
               <span className="absolute top-1 right-[calc(50%-18px)]">
                 <UnreadDot count={unread} />

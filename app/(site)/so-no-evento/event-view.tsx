@@ -3,9 +3,9 @@ import { CalendarDays, Clock, MapPin } from "lucide-react"
 import { EventPhoto } from "@/components/event-photo"
 import { WhatsAppButton, WhatsAppIcon } from "@/components/whatsapp-button"
 import { formatPrice } from "@/lib/format"
-import { fotoUrl, soNoEvento, type EventoGrupo } from "@/lib/so-no-evento"
+import { eventoInfo, type EventoGrupo } from "@/lib/so-no-evento"
 
-const { evento, contato } = soNoEvento
+const { evento, contato } = eventoInfo
 const dia = evento.data.slice(0, 5)
 
 /** Página pública só por link (anúncios). Não entra no menu, no catálogo nem em buscadores. */
@@ -31,6 +31,12 @@ export function EventView({ grupos, destaque }: { grupos: EventoGrupo[]; destaqu
         </ul>
       </header>
 
+      {grupos.length === 0 && (
+        <p className="rounded-2xl border border-dashed p-8 text-center text-sm text-muted-foreground">
+          Os itens do evento estão chegando. Volte em breve!
+        </p>
+      )}
+
       {grupos.map((g, i) => (
         <section key={g.id} id={g.id} className="scroll-mt-24" aria-labelledby={`${g.id}-titulo`}>
           {destaque && i === 1 && (
@@ -41,12 +47,12 @@ export function EventView({ grupos, destaque }: { grupos: EventoGrupo[]; destaqu
           </h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
             {g.itens.map((item, j) => (
-              <article key={item.nome} className="flex overflow-hidden rounded-2xl border bg-card shadow-sm sm:flex-col">
+              <article key={item.id} className="flex overflow-hidden rounded-2xl border bg-card shadow-sm sm:flex-col">
                 <div className="relative w-28 shrink-0 self-start sm:w-auto sm:self-auto">
-                  <EventPhoto src={fotoUrl(item.foto)} alt={item.nome} priority={i === 0 && j < 2} />
+                  <EventPhoto src={item.foto} alt={item.nome} priority={i === 0 && j < 2} />
                   {item.vendido && (
                     <div className="absolute inset-0 flex items-center justify-center bg-foreground/45">
-                      <span className="-rotate-12 rounded-md border-2 border-white px-3 py-1 text-lg font-black tracking-widest text-white">
+                      <span className="-rotate-12 rounded-md border-2 border-white px-1.5 py-0.5 text-xs font-black sm:px-3 sm:py-1 sm:text-lg tracking-widest text-white">
                         VENDIDO
                       </span>
                     </div>

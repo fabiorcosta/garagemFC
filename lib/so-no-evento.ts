@@ -1,30 +1,17 @@
 import "server-only"
+import { cache } from "react"
 import { z } from "zod"
 import raw from "@/content/so-no-evento.json"
+import { publicDb as db } from "./db"
+import { getFileUrl } from "./file-url"
 
 /**
- * Itens "só no evento": vêm de content/so-no-evento.json (sem banco, sem rota de escrita).
- * O arquivo é validado aqui; se algo estiver fora do formato, o build falha em vez de publicar errado.
- *  - foto: só arquivos locais em /public/so-no-evento/ (nenhum endereço externo entra na página).
- *  - grupos: id fixo e escrito à mão, para o link de um anúncio nunca mudar de grupo
- *    quando um item novo for incluído.
- *  - sem campo de preço antigo/riscado: regra do dono (nada de "de R$ X por R$ Y").
+ * Página /so-no-evento (só por link de anúncio).
+ *  - Data, local e contatos: content/so-no-evento.json (validado; formato errado = build falha).
+ *  - Itens: tabela EventItem, editada no painel (/admin/evento). O visitante usa o papel
+ *    garagem_public, que pela RLS só enxerga itens publicados.
  */
-const itemSchema = z
-  .object({
-    nome: z.string().trim().min(1).max(80),
-    preco: z.number().int().positive().max(100_000),
-    descricao: z.string().trim().max(120).optional(),
-    foto: z
-      .string()
-      .regex(/^[a-z0-9][a-z0-9._-]{0,80}\.(jpg|jpeg|png|webp)$/i, "foto: só o nome do arquivo em public/so-no-evento/")
-      .nullable()
-      .optional(),
-    vendido: z.boolean().optional(),
-  })
-  .strict()
-
-const schema = z
+const infoSchema = z
   .object({
     evento: z.object({ data: z.string().min(1), horario: z.string().min(1), local: z.string().min(1) }).strict(),
     contato: z
@@ -34,22 +21,38 @@ const schema = z
         instagram: z.string().regex(/^[a-z0-9._]{1,30}$/),
       })
       .strict(),
-    grupos: z
-      .array(z.object({ id: z.string().regex(/^grupo-[1-9]\d{0,2}$/), itens: z.array(itemSchema).min(1).max(3) }).strict())
-      .min(1)
-      .refine((g) => new Set(g.map((x) => x.id)).size === g.length, "ids de grupo repetidos"),
   })
   .strict()
 
-export const soNoEvento = schema.parse(raw)
+export const eventoInfo = infoSchema.parse(raw)
 
-export type EventoGrupo = (typeof soNoEvento.grupos)[number]
-export type EventoItem = EventoGrupo["itens"][number]
+export type EventoItem = { id: string; nome: string; preco: number; descricao: string; foto: string | null; vendido: boolean }
+export type EventoGrupo = { id: string; itens: EventoItem[] }
 
-export function fotoUrl(foto: string | null | undefined) {
-  return foto ? `/so-no-evento/${foto}` : null
-}
+/** Itens publicados, agrupados por número de grupo (só os campos que a página mostra). */
+export const getGrupos = cache(async (): Promise<EventoGrupo[]> => {
+  const rows = await db.eventItem.findMany({
+    where: { published: true },
+    orderBy: [{ group: "asc" }, { createdAt: "asc" }],
+    select: { id: true, group: true, name: true, price: true, description: true, photoPath: true, thumbPath: true, sold: true },
+  })
+  const map = new Map<number, EventoItem[]>()
+  for (const r of rows) {
+    const list = map.get(r.group) ?? []
+    list.push({
+      id: r.id,
+      nome: r.name,
+      preco: r.price,
+      descricao: r.description,
+      foto: getFileUrl(r.photoPath) ?? getFileUrl(r.thumbPath),
+      vendido: r.sold,
+    })
+    map.set(r.group, list)
+  }
+  return [...map.entries()].map(([n, itens]) => ({ id: `grupo-${n}`, itens }))
+})
 
-export function getGrupo(id: string) {
-  return soNoEvento.grupos.find((g) => g.id === id) ?? null
+/** Só "grupo-N" (N de 1 a 99) que exista; qualquer outra coisa na URL vira 404. */
+export function isGroupSlug(value: string) {
+  return /^grupo-[1-9]\d?$/.test(value)
 }

@@ -28,7 +28,7 @@ if (PASSWORDS.garagem_public === PASSWORDS.garagem_admin) throw new Error("Os do
 
 const db = new PrismaClient({ datasourceUrl: url })
 
-const CATALOG = ["Category", "Item", "ItemPhoto", "SiteSettings"]
+const CATALOG = ["Category", "Item", "ItemPhoto", "SiteSettings", "EventItem"]
 const BUSINESS = [...CATALOG, "ContactMessage"]
 // Tabelas só do admin: o visitante não tem GRANT nenhum (dados privados da venda)
 const ADMIN_ONLY = ["Sale"]
@@ -84,6 +84,8 @@ const statements: string[] = [
   `CREATE POLICY gar_public_read ON "Item" FOR SELECT TO garagem_public USING ("published" = true)`,
   `CREATE POLICY gar_public_read ON "ItemPhoto" FOR SELECT TO garagem_public
      USING ("isPublic" = true AND EXISTS (SELECT 1 FROM "Item" i WHERE i.id = "ItemPhoto"."itemId" AND i."published" = true))`,
+  // Itens "só no evento": visitante só lê os publicados (rascunho nunca sai do banco para ele)
+  `CREATE POLICY gar_public_read ON "EventItem" FOR SELECT TO garagem_public USING ("published" = true)`,
   // Visitante só cria mensagem nova, não lida, e com o aceite do aviso de garantia registrado
   `CREATE POLICY gar_public_insert ON "ContactMessage" FOR INSERT TO garagem_public
      WITH CHECK ("read" = false AND "disclaimerAcceptedAt" IS NOT NULL AND "disclaimerVersion" IS NOT NULL)`,
