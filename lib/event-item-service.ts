@@ -88,5 +88,19 @@ export const eventSettingsSchema = z
     eventEnd: z.union([z.literal(""), hhmm]),
     eventPlace: z.string().trim().max(160, "Local: no máximo 160 caracteres"),
     eventInstructions: z.string().trim().max(600, "Instruções: no máximo 600 caracteres"),
+    // Aceita "(11) 99644-4274", "+55 11 99644-4274"… e guarda só os dígitos, com DDI 55.
+    eventWhatsapp: z
+      .string()
+      .transform((v) => {
+        const d = v.replace(/\D/g, "")
+        return d && d.length <= 11 ? `55${d}` : d
+      })
+      .refine((d) => d === "" || /^55\d{10,11}$/.test(d), "WhatsApp inválido: use DDD + número"),
+    // Aceita "@perfil", "perfil" ou o link do perfil; guarda só o nome.
+    eventInstagram: z
+      .string()
+      .trim()
+      .transform((v) => v.replace(/^https?:\/\/(www\.)?instagram\.com\//i, "").replace(/^@/, "").replace(/\/.*$/, "").toLowerCase())
+      .refine((v) => v === "" || /^[a-z0-9._]{1,30}$/.test(v), "Instagram inválido"),
   })
   .refine((d) => !d.eventStart || !d.eventEnd || d.eventEnd > d.eventStart, "O horário de término precisa ser depois do início")

@@ -16,6 +16,8 @@ export type EventSettings = {
   eventEnd: string
   eventPlace: string
   eventInstructions: string
+  eventWhatsapp: string
+  eventInstagram: string
 }
 
 /** Data, horário, local e instruções do evento: aparecem na página /so-no-evento. */
@@ -82,6 +84,33 @@ export function EventSettingsForm({ initial }: { initial: EventSettings }) {
           placeholder="Pagamento em Pix ou dinheiro. Leve sacola. Estacionamento na rua."
         />
         <span className="text-xs text-muted-foreground">{v.eventInstructions.length}/600</span>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-1.5">
+          <Label htmlFor="ev-wa">WhatsApp</Label>
+          <Input
+            id="ev-wa"
+            inputMode="tel"
+            maxLength={20}
+            value={v.eventWhatsapp}
+            onChange={(e) => set("eventWhatsapp", e.target.value)}
+            className="h-10"
+            placeholder="(11) 99644-4274"
+          />
+          <span className="text-xs text-muted-foreground">Vazio = usa o WhatsApp de Configurações.</span>
+        </div>
+        <div className="grid gap-1.5">
+          <Label htmlFor="ev-ig">Instagram</Label>
+          <Input
+            id="ev-ig"
+            maxLength={80}
+            value={v.eventInstagram}
+            onChange={(e) => set("eventInstagram", e.target.value)}
+            className="h-10"
+            placeholder="@garagem.casapomar"
+          />
+          <span className="text-xs text-muted-foreground">Vazio = não aparece na página.</span>
+        </div>
       </div>
       <Button type="submit" disabled={busy || !dirty} className="h-10 self-start rounded-full px-5">
         <Check /> Salvar dados do evento

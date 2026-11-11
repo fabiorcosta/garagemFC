@@ -3,7 +3,7 @@ import { CalendarDays, Clock, Info, MapPin } from "lucide-react"
 import { EventPhoto } from "@/components/event-photo"
 import { WhatsAppButton, WhatsAppIcon } from "@/components/whatsapp-button"
 import { formatPrice } from "@/lib/format"
-import { contato, type EventoDados, type EventoGrupo } from "@/lib/so-no-evento"
+import type { EventoDados, EventoGrupo } from "@/lib/so-no-evento"
 
 /** Página pública só por link (anúncios). Não entra no menu, no catálogo nem em buscadores. */
 export function EventView({ grupos, evento, destaque }: { grupos: EventoGrupo[]; evento: EventoDados; destaque?: string }) {
@@ -74,9 +74,9 @@ export function EventView({ grupos, evento, destaque }: { grupos: EventoGrupo[];
                     <CalendarDays className="size-3.5 shrink-0" aria-hidden />
                     Disponível apenas {noDia}
                   </p>
-                  {!item.vendido && (
+                  {!item.vendido && evento.whatsapp && (
                     <WhatsAppButton
-                      phone={contato.whatsapp}
+                      phone={evento.whatsapp}
                       message={`Olá! Vi no site e tenho interesse em ${item.nome}`}
                       label="Falar no WhatsApp"
                       itemName={item.nome}
@@ -91,22 +91,26 @@ export function EventView({ grupos, evento, destaque }: { grupos: EventoGrupo[];
       ))}
 
       <footer className="flex flex-col gap-2 rounded-2xl border p-5 text-sm">
-        <a
-          href={`https://wa.me/${contato.whatsapp}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 hover:text-primary"
-        >
-          <WhatsAppIcon className="size-4" /> WhatsApp: {contato.whatsappExibicao}
-        </a>
-        <a
-          href={`https://www.instagram.com/${contato.instagram}/`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 hover:text-primary"
-        >
-          <InstagramIcon className="size-4" /> Instagram: @{contato.instagram}
-        </a>
+        {evento.whatsapp && (
+          <a
+            href={`https://wa.me/${evento.whatsapp}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 hover:text-primary"
+          >
+            <WhatsAppIcon className="size-4" /> WhatsApp: {evento.whatsappExibicao}
+          </a>
+        )}
+        {evento.instagram && (
+          <a
+            href={`https://www.instagram.com/${evento.instagram}/`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 hover:text-primary"
+          >
+            <InstagramIcon className="size-4" /> Instagram: @{evento.instagram}
+          </a>
+        )}
         <Link href="/itens" className="underline underline-offset-2 hover:text-primary">
           Catálogo completo: garagem.casapomar.work/itens
         </Link>

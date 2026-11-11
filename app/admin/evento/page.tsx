@@ -11,7 +11,15 @@ export default async function EventAdminPage() {
     db.eventItem.findMany({ orderBy: [{ group: "asc" }, { createdAt: "asc" }], select: eventItemFields }),
     db.siteSettings.findUnique({
       where: { id: "main" },
-      select: { eventDate: true, eventStart: true, eventEnd: true, eventPlace: true, eventInstructions: true },
+      select: {
+        eventDate: true,
+        eventStart: true,
+        eventEnd: true,
+        eventPlace: true,
+        eventInstructions: true,
+        eventWhatsapp: true,
+        eventInstagram: true,
+      },
     }),
   ])
   return (
@@ -24,7 +32,9 @@ export default async function EventAdminPage() {
         </p>
       </div>
       <EventSettingsForm
-        initial={settings ?? { eventDate: "", eventStart: "", eventEnd: "", eventPlace: "", eventInstructions: "" }}
+        initial={
+          settings ?? { eventDate: "", eventStart: "", eventEnd: "", eventPlace: "", eventInstructions: "", eventWhatsapp: "", eventInstagram: "" }
+        }
       />
       <EventManager
         baseUrl={`${siteUrl()}/so-no-evento`}

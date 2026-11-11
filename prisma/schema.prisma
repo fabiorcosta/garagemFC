@@ -119,6 +119,10 @@ model SiteSettings {
   eventEnd           String    @default("")
   eventPlace         String    @default("")
   eventInstructions  String    @default("")
+  /// WhatsApp do evento (só dígitos, com DDI). Vazio = usa o WhatsApp geral do site.
+  eventWhatsapp      String    @default("")
+  /// Instagram do evento, sem @. Vazio = não exibe.
+  eventInstagram     String    @default("garagem.casapomar")
   updatedAt          DateTime  @updatedAt
 }
 

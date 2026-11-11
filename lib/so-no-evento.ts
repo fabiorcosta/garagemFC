@@ -1,31 +1,14 @@
 import "server-only"
 import { cache } from "react"
-import { z } from "zod"
-import raw from "@/content/so-no-evento.json"
 import { publicDb as db } from "./db"
 import { getFileUrl } from "./file-url"
 
 /**
  * Página /so-no-evento (só por link de anúncio).
- *  - Contatos: content/so-no-evento.json (validado; formato errado = build falha).
- *  - Data, horário, local e instruções: SiteSettings, editados no painel (/admin/evento).
+ *  - Data, horário, local, instruções, WhatsApp e Instagram: SiteSettings, editados no painel (/admin/evento).
  *  - Itens: tabela EventItem, editada no painel. O visitante usa o papel garagem_public,
  *    que pela RLS só enxerga itens publicados.
  */
-const infoSchema = z
-  .object({
-    contato: z
-      .object({
-        whatsapp: z.string().regex(/^55\d{10,11}$/),
-        whatsappExibicao: z.string().min(1),
-        instagram: z.string().regex(/^[a-z0-9._]{1,30}$/),
-      })
-      .strict(),
-  })
-  .strict()
-
-export const contato = infoSchema.parse(raw).contato
-
 /** "12:00" → "12h"; "12:30" → "12h30" */
 function hora(v: string) {
   const [h, m] = v.split(":")
@@ -41,23 +24,50 @@ export type EventoDados = {
   horario: string | null
   local: string | null
   instrucoes: string | null
+  /** Só dígitos com DDI (ou null se nem o do evento nem o geral do site estiverem preenchidos) */
+  whatsapp: string | null
+  /** "(11) 99644-4274" */
+  whatsappExibicao: string | null
+  instagram: string | null
+}
+
+/** 5511996444274 → "(11) 99644-4274" */
+function formatPhone(d: string) {
+  const n = d.replace(/^55/, "")
+  return n.length === 11 ? `(${n.slice(0, 2)}) ${n.slice(2, 7)}-${n.slice(7)}` : n.length === 10 ? `(${n.slice(0, 2)}) ${n.slice(2, 6)}-${n.slice(6)}` : d
 }
 
 /** Dados do evento como a página (e qualquer peça de divulgação) deve exibir. */
 export const getEvento = cache(async (): Promise<EventoDados> => {
   const s = await db.siteSettings.findUnique({
     where: { id: "main" },
-    select: { eventDate: true, eventStart: true, eventEnd: true, eventPlace: true, eventInstructions: true },
+    select: {
+      eventDate: true,
+      eventStart: true,
+      eventEnd: true,
+      eventPlace: true,
+      eventInstructions: true,
+      eventWhatsapp: true,
+      eventInstagram: true,
+      whatsapp: true,
+    },
   })
   const [y, m, d] = (s?.eventDate ?? "").split("-")
   const start = s?.eventStart ? hora(s.eventStart) : null
   const end = s?.eventEnd ? hora(s.eventEnd) : null
+  // WhatsApp do evento; se vazio, o geral do site (Configurações).
+  let wa = (s?.eventWhatsapp || s?.whatsapp || "").replace(/\D/g, "")
+  if (wa && wa.length <= 11) wa = `55${wa}`
+  if (!/^55\d{10,11}$/.test(wa)) wa = ""
   return {
     data: y ? `${d}/${m}/${y}` : null,
     dia: y ? `${d}/${m}` : null,
     horario: start && end ? `${start} às ${end}` : start ? `a partir das ${start}` : end ? `até ${end}` : null,
     local: s?.eventPlace || null,
     instrucoes: s?.eventInstructions || null,
+    whatsapp: wa || null,
+    whatsappExibicao: wa ? formatPhone(wa) : null,
+    instagram: s?.eventInstagram || null,
   }
 })
 
