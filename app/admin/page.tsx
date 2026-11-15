@@ -9,7 +9,7 @@ import { getStatusCounts } from "@/lib/queries"
 
 export default async function DashboardPage() {
   const { db } = await adminPageContext()
-  const [counts, drafts, unread, latestItems, latestMessages, sales] = await Promise.all([
+  const [counts, drafts, unread, latestItems, latestMessages, sales, categories, allItems] = await Promise.all([
     getStatusCounts(), // contagem pública: só itens publicados
     db.item.count({ where: { published: false } }),
     db.contactMessage.count({ where: { read: false } }),
@@ -23,7 +23,29 @@ export default async function DashboardPage() {
       where: { item: { status: { in: ["vendido", "reservado"] } } },
       select: { finalPrice: true, paidPercent: true, item: { select: { price: true } } },
     }),
+    db.category.findMany({ orderBy: [{ sortOrder: "asc" }, { name: "asc" }], select: { id: true, name: true } }),
+    db.item.findMany({ select: { categoryId: true, status: true, price: true, published: true, sale: { select: { finalPrice: true } } } }),
   ])
+  // Resumo por categoria (inclui rascunhos na contagem total; valores só de itens publicados)
+  type CatRow = { id: string; name: string; total: number; disponivel: number; vendido: number; aVenda: number; vendidoValor: number }
+  const byCat = new Map<string, CatRow>()
+  for (const c of [...categories, { id: "none", name: "Sem categoria" }]) {
+    byCat.set(c.id, { id: c.id, name: c.name, total: 0, disponivel: 0, vendido: 0, aVenda: 0, vendidoValor: 0 })
+  }
+  for (const i of allItems) {
+    const row = byCat.get(i.categoryId ?? "none")
+    if (!row) continue
+    row.total++
+    if (!i.published) continue
+    if (i.status === "disponivel") {
+      row.disponivel++
+      row.aVenda += i.price
+    } else if (i.status === "vendido") {
+      row.vendido++
+      row.vendidoValor += i.sale?.finalPrice ?? i.price
+    }
+  }
+  const catRows = [...byCat.values()].filter((r) => r.total > 0 || r.id !== "none")
   // Valor de cada venda = valor combinado (ou o preço do anúncio, se não informado)
   const saleValue = (s: (typeof sales)[number]) => s.finalPrice ?? s.item.price
   const received = sales.reduce((sum, s) => sum + (saleValue(s) * s.paidPercent) / 100, 0)
@@ -59,6 +81,40 @@ export default async function DashboardPage() {
           <span className="text-xs font-semibold">A receber (vendidos e reservados)</span>
         </div>
       </div>
+
+      <section className="rounded-2xl border bg-card p-4">
+        <h2 className="mb-2 font-bold">Por categoria</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[520px] text-sm">
+            <thead>
+              <tr className="text-left text-xs text-muted-foreground">
+                <th className="py-2 font-semibold">Categoria</th>
+                <th className="py-2 text-right font-semibold">Itens</th>
+                <th className="py-2 text-right font-semibold">Disponíveis</th>
+                <th className="py-2 text-right font-semibold">Vendidos</th>
+                <th className="py-2 text-right font-semibold">À venda (R$)</th>
+                <th className="py-2 text-right font-semibold">Vendido (R$)</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {catRows.map((r) => (
+                <tr key={r.id} className={cn(r.id === "none" && r.total > 0 && "text-destructive")}>
+                  <td className="py-2">
+                    <Link href={`/admin/itens?cat=${r.id}`} className="font-medium hover:text-primary hover:underline">
+                      {r.name}
+                    </Link>
+                  </td>
+                  <td className="py-2 text-right">{r.total}</td>
+                  <td className="py-2 text-right">{r.disponivel}</td>
+                  <td className="py-2 text-right">{r.vendido}</td>
+                  <td className="py-2 text-right">{formatPrice(r.aVenda)}</td>
+                  <td className="py-2 text-right">{formatPrice(r.vendidoValor)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Panel title="Últimos itens" href="/admin/itens">

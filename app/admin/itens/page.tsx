@@ -8,8 +8,12 @@ import { pickupLabel, toDateInput } from "@/lib/pickup-date"
 import type { SaleValues } from "@/lib/sale-shared"
 import { ItemsTable } from "./items-table"
 
-export default async function AdminItemsPage() {
+export default async function AdminItemsPage(props: PageProps<"/admin/itens">) {
   const { db } = await adminPageContext()
+  // ?cat=<id> ou ?cat=none (vindo do Dashboard); valor fora do formato é ignorado
+  const rawCat = (await props.searchParams).cat
+  const cat = typeof rawCat === "string" && /^(none|c[a-z0-9]{20,31})$/.test(rawCat) ? rawCat : ""
+  const categories = await db.category.findMany({ orderBy: [{ sortOrder: "asc" }, { name: "asc" }], select: { id: true, name: true } })
   const items = await db.item.findMany({
     orderBy: { createdAt: "desc" },
     include: {
@@ -28,6 +32,7 @@ export default async function AdminItemsPage() {
     price: i.price,
     status: i.status,
     category: i.category?.name ?? null,
+    categoryId: i.categoryId,
     thumb: photoThumbUrl(i.photos[0]),
     featured: i.featured,
     published: i.published,
@@ -63,7 +68,7 @@ export default async function AdminItemsPage() {
           </Link>
         </div>
       </div>
-      <ItemsTable rows={rows} />
+      <ItemsTable rows={rows} categories={categories} initialCategory={cat} />
     </div>
   )
 }

@@ -4,7 +4,7 @@ import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Copy, Eye, EyeOff, ExternalLink, ImageOff, Pencil, Receipt, Star, Trash2 } from "lucide-react"
+import { Copy, Eye, EyeOff, ExternalLink, FolderTree, ImageOff, Pencil, Receipt, Star, Trash2, X } from "lucide-react"
 import { SaleDialog } from "@/components/admin/sale-dialog"
 import { PAYMENT_LABEL, paymentStatusLabel, type SaleValues } from "@/lib/sale-shared"
 import { toast } from "sonner"
@@ -20,6 +20,7 @@ type Row = {
   price: number
   status: string
   category: string | null
+  categoryId: string | null
   thumb: string | null
   featured: boolean
   published: boolean
@@ -34,15 +35,70 @@ const statusBtn: Record<ItemStatus, string> = {
   vendido: "data-[on=true]:bg-foreground data-[on=true]:text-background",
 }
 
-export function ItemsTable({ rows }: { rows: Row[] }) {
+/** "" = todas; "none" = sem categoria; senão o id da categoria */
+type CatFilter = string
+
+export function ItemsTable({
+  rows,
+  categories,
+  initialCategory = "",
+}: {
+  rows: Row[]
+  categories: { id: string; name: string }[]
+  initialCategory?: CatFilter
+}) {
   const router = useRouter()
   const [filter, setFilter] = useState<"" | ItemStatus | "rascunho">("")
+  const [catFilter, setCatFilter] = useState<CatFilter>(initialCategory)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [target, setTarget] = useState<string>("")
+  const [bulkBusy, setBulkBusy] = useState(false)
   const [busy, setBusy] = useState<string | null>(null)
   // markSold vem da AÇÃO que abriu a janela, não da linha (que pode estar desatualizada logo após mudar o status)
   const [saleFor, setSaleFor] = useState<{ id: string; markSold: boolean } | null>(null)
   const saleRow = rows.find((r) => r.id === saleFor?.id)
   const matches = (r: Row, f: typeof filter) => (f === "rascunho" ? !r.published : f ? r.status === f : true)
-  const visible = rows.filter((r) => matches(r, filter))
+  const matchesCat = (r: Row, c: CatFilter) => (c === "none" ? !r.categoryId : c ? r.categoryId === c : true)
+  const visible = rows.filter((r) => matches(r, filter) && matchesCat(r, catFilter))
+  const allVisibleSelected = visible.length > 0 && visible.every((r) => selected.has(r.id))
+
+  function toggle(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function toggleAllVisible() {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (allVisibleSelected) visible.forEach((r) => next.delete(r.id))
+      else visible.forEach((r) => next.add(r.id))
+      return next
+    })
+  }
+
+  async function applyCategory() {
+    if (!target) return toast.error("Escolha a categoria")
+    setBulkBusy(true)
+    try {
+      const res = await adminFetch<{ updated: number }>("/api/admin/items/bulk-category", "POST", {
+        ids: [...selected],
+        categoryId: target === "none" ? null : target,
+      })
+      const name = target === "none" ? "Sem categoria" : categories.find((c) => c.id === target)?.name
+      toast.success(`${res.updated} ${res.updated === 1 ? "item movido" : "itens movidos"} para ${name}`)
+      setSelected(new Set())
+      setTarget("")
+      router.refresh()
+    } catch (e) {
+      toast.error((e as Error).message)
+    } finally {
+      setBulkBusy(false)
+    }
+  }
 
   async function setStatus(id: string, status: ItemStatus) {
     setBusy(id)
@@ -114,6 +170,27 @@ export function ItemsTable({ rows }: { rows: Row[] }) {
         ))}
       </div>
 
+      <div className="flex gap-2 overflow-x-auto">
+        {[{ id: "", name: "Todas as categorias" }, { id: "none", name: "Sem categoria" }, ...categories].map((c) => (
+          <button
+            key={c.id || "all"}
+            onClick={() => setCatFilter(c.id)}
+            className={cn(
+              "h-8 shrink-0 rounded-full border px-3 text-xs font-semibold",
+              catFilter === c.id ? "border-olive bg-olive text-olive-foreground" : "bg-card",
+              c.id === "none" && catFilter !== "none" && rows.some((r) => !r.categoryId) && "border-destructive/50 text-destructive",
+            )}
+          >
+            {c.name} ({rows.filter((r) => matchesCat(r, c.id)).length})
+          </button>
+        ))}
+      </div>
+
+      <label className="flex items-center gap-2 px-1 text-sm">
+        <input type="checkbox" checked={allVisibleSelected} onChange={toggleAllVisible} className="size-4 accent-[var(--primary)]" />
+        Selecionar os {visible.length} itens da lista
+      </label>
+
       <ul className="divide-y overflow-hidden rounded-2xl border bg-card">
         {visible.length === 0 && <li className="p-6 text-center text-sm text-muted-foreground">Nenhum item aqui.</li>}
         {visible.map((r) => (
@@ -122,6 +199,13 @@ export function ItemsTable({ rows }: { rows: Row[] }) {
             className={cn("flex flex-col gap-3 p-3 sm:flex-row sm:items-center", busy === r.id && "opacity-50")}
           >
             <div className="flex min-w-0 flex-1 items-center gap-3">
+              <input
+                type="checkbox"
+                checked={selected.has(r.id)}
+                onChange={() => toggle(r.id)}
+                aria-label={`Selecionar ${r.title}`}
+                className="size-5 shrink-0 accent-[var(--primary)]"
+              />
               <div className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-muted">
                 {r.thumb ? (
                   <Image src={r.thumb} alt="" fill sizes="56px" className="object-cover" />
@@ -235,6 +319,39 @@ export function ItemsTable({ rows }: { rows: Row[] }) {
           </li>
         ))}
       </ul>
+      {selected.size > 0 && (
+        <div className="sticky bottom-16 z-20 flex flex-wrap items-center gap-2 rounded-2xl border bg-card p-3 shadow-lg md:bottom-4">
+          <span className="text-sm font-semibold">
+            {selected.size} {selected.size === 1 ? "selecionado" : "selecionados"}
+          </span>
+          <FolderTree className="size-4 text-muted-foreground" aria-hidden />
+          <select
+            aria-label="Mover para a categoria"
+            value={target}
+            onChange={(e) => setTarget(e.target.value)}
+            className="h-10 min-w-40 rounded-md border bg-background px-3 text-sm"
+          >
+            <option value="">Mover para…</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+            <option value="none">Sem categoria</option>
+          </select>
+          <button
+            type="button"
+            onClick={applyCategory}
+            disabled={bulkBusy || !target}
+            className="h-10 rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+          >
+            {bulkBusy ? "Aplicando…" : "Aplicar"}
+          </button>
+          <button type="button" onClick={() => setSelected(new Set())} className="ml-auto rounded-full p-2 hover:bg-muted" aria-label="Limpar seleção">
+            <X className="size-4" />
+          </button>
+        </div>
+      )}
       {saleRow && (
         <SaleDialog
           key={saleRow.id}
