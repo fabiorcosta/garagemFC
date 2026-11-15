@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Plus } from "lucide-react"
+import { FileArchive, Plus } from "lucide-react"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { adminPageContext } from "@/lib/admin-auth"
@@ -52,10 +52,16 @@ export default async function AdminItemsPage() {
           <h1 className="text-2xl font-extrabold">Itens</h1>
           <p className="text-sm text-muted-foreground">{items.length} cadastrados</p>
         </div>
-        <Link href="/admin/itens/novo" className={cn(buttonVariants(), "h-10 rounded-full px-4")}>
-          <Plus />
-          Novo item
-        </Link>
+        <div className="flex flex-wrap justify-end gap-2">
+          <Link href="/admin/itens/importar" className={cn(buttonVariants({ variant: "outline" }), "h-10 rounded-full px-4")}>
+            <FileArchive />
+            Importar do WhatsApp
+          </Link>
+          <Link href="/admin/itens/novo" className={cn(buttonVariants(), "h-10 rounded-full px-4")}>
+            <Plus />
+            Novo item
+          </Link>
+        </div>
       </div>
       <ItemsTable rows={rows} />
     </div>
