@@ -18,6 +18,8 @@ export type ParsedPhoto = {
   /** null = não achei o preço na legenda */
   price: number | null
   unused: boolean
+  /** legenda inteira, linha a linha, sem o preço (vai para a descrição do item) */
+  description: string
   /** legenda original, para conferência */
   caption: string
 }
@@ -26,7 +28,8 @@ const HEADER = /^\[?(\d{1,2}\/\d{1,2}\/\d{2,4})[,\s]+(\d{1,2}:\d{2}(?::\d{2})?)\
 const ATTACH_IOS = /<(?:anexado|attached|adjunto):\s*([^>]+?)\s*>/i
 const ATTACH_ANDROID = /^(\S+\.(?:jpe?g|png|webp|heic))\s*\((?:arquivo anexado|file attached|archivo adjunto)\)/im
 const UNUSED = /\b(?:s\/\s?uso|sem uso|nunca usad[oa]|novo na caixa)\b/i
-const SIZE_LINE = /^(?:n[uú]mero|num\.?|n[º°o]\.?|tam(?:anho)?\.?|cal[çc]ado)\s*:?\s*(.{1,20})$/i
+// Rótulo seguido de ":" ou espaço (assim "Tampa azul" não vira tamanho "pa azul"); "nº39" também vale.
+const SIZE_LINE = /^(?:(?:n[uú]mero|num|tamanho|tam|cal[çc]ado)\.?(?:\s*:\s*|\s+)|n[º°]\.?\s*:?\s*)(.{1,20})$/i
 const PRICE_IN_LINE = /^(?:valor|pre[çc]o|r\$)?\s*:?\s*(?:r\$)?\s*(\d{1,3}(?:\.\d{3})+|\d+)(?:,(\d{1,2}))?\b/i
 
 /** "70,00" → 70 · "1.200,00" → 1200 · "R$ 50" → 50 · arredonda centavos para reais inteiros (o site mostra sem centavos). */
@@ -42,30 +45,38 @@ export function parseCaption(caption: string) {
   const unused = UNUSED.test(caption)
   const lines = caption
     .split("\n")
-    .map((l) => l.replace(UNUSED, "").replace(/\s+/g, " ").trim())
+    .map((l) => l.replace(/\s+/g, " ").trim())
     .filter(Boolean)
   let size = ""
+  const description: string[] = []
   let sizeLabel: "nº" | "tam." = "nº"
   let price: number | null = null
   const rest: string[] = []
-  for (const line of lines) {
+  for (const original of lines) {
+    const line = original.replace(UNUSED, "").replace(/\s+/g, " ").trim()
+    if (!line) {
+      description.push(original)
+      continue
+    }
     const s = line.match(SIZE_LINE)
     if (!size && s) {
       size = s[1].trim()
       sizeLabel = /^tam/i.test(line) ? "tam." : "nº"
+      description.push(original)
       continue
     }
-    if (price === null && /^(?:valor|pre[çc]o|r\$)/i.test(line)) {
+    if (price === null && (/^(?:valor|pre[çc]o|r\$)/i.test(line) || /^[\d.,\sR$]+$/i.test(line))) {
       price = parsePrice(line)
-      continue
-    }
-    if (price === null && /^[\d.,\sR$]+$/i.test(line)) {
-      price = parsePrice(line)
+      // Na descrição fica tudo menos o preço (ex.: "Valor 150,00 s/uso" → "s/uso")
+      const remainder = original.replace(PRICE_IN_LINE, "").trim()
+      if (remainder) description.push(remainder)
       continue
     }
     rest.push(line)
+    description.push(original)
   }
-  return { name: rest.join(" ").slice(0, 100), size: size.slice(0, 20), sizeLabel, price, unused }
+  // Nome = 1ª linha que não é número nem preço; o resto da legenda fica na descrição.
+  return { name: (rest[0] ?? "").slice(0, 100), size: size.slice(0, 20), sizeLabel, price, unused, description: description.join("\n").slice(0, 2000) }
 }
 
 /** Junta as linhas de cada mensagem e pega só as que têm foto. */

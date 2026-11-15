@@ -122,7 +122,6 @@ export function ImportWizard({
         if (duplicateOf === null) seen.set(hash, out.length + 1)
         const preview = URL.createObjectURL(blob)
         previews.current.push(preview)
-        const sizeWord = p.sizeLabel === "nº" ? "Número" : "Tamanho"
         out.push({
           key: `${i}-${p.file}`,
           blob,
@@ -130,7 +129,7 @@ export function ImportWizard({
           title: itemTitle(p),
           price: p.price ? String(p.price) : "",
           condition: p.unused ? newCondition : usedCondition,
-          description: [p.size ? `${sizeWord} ${p.size}.` : "", p.unused ? "Sem uso." : ""].filter(Boolean).join(" "),
+          description: p.description,
           // Repetida ou sem preço: começa desmarcada (você decide)
           selected: duplicateOf === null && !!p.price,
           duplicateOf,
@@ -287,6 +286,15 @@ export function ImportWizard({
                 disabled={r.status === "ok" || publishing}
                 onChange={(e) => patch(r.key, { title: e.target.value })}
                 className="h-9"
+              />
+              <textarea
+                aria-label="Descrição"
+                value={r.description}
+                maxLength={2000}
+                rows={Math.min(4, Math.max(2, r.description.split("\n").length))}
+                disabled={r.status === "ok" || publishing}
+                onChange={(e) => patch(r.key, { description: e.target.value })}
+                className="w-full resize-y rounded-md border bg-background px-3 py-1.5 text-sm"
               />
               <div className="flex flex-wrap items-center gap-2">
                 <div className="flex items-center gap-1 text-sm">
