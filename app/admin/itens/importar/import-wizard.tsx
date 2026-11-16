@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { cn } from "@/lib/utils"
-import { itemTitle, parseChat } from "@/lib/whatsapp-import"
+import { flagCatalog, itemTitle, parseChat } from "@/lib/whatsapp-import"
 import { listZip, readEntry, ZipError, type ZipEntry } from "@/lib/zip-reader"
 
 /** Mesmas opções do cadastro manual (sem web worker: a biblioteca baixaria código externo). */
@@ -29,6 +29,9 @@ type Row = {
   description: string
   selected: boolean
   duplicateOf: number | null
+  /** "hash" = esta foto já foi importada; "nome" = já existe item com o mesmo nome e preço */
+  inCatalog: "hash" | "nome" | null
+  hash: string
   status: "idle" | "working" | "ok" | "error"
   error?: string
   slug?: string
@@ -70,10 +73,14 @@ export function ImportWizard({
   categories,
   conditions,
   maxPickup,
+  knownHashes,
+  legacyKeys,
 }: {
   categories: { id: string; name: string }[]
   conditions: string[]
   maxPickup: string
+  knownHashes: string[]
+  legacyKeys: string[]
 }) {
   const input = useRef<HTMLInputElement>(null)
   const [status, setStatus] = useState<Status>({ phase: "pick" })
@@ -130,12 +137,23 @@ export function ImportWizard({
           price: p.price ? String(p.price) : "",
           condition: p.unused ? newCondition : usedCondition,
           description: p.description,
-          // Repetida ou sem preço: começa desmarcada (você decide)
           selected: duplicateOf === null && !!p.price,
           duplicateOf,
+          inCatalog: null,
+          hash,
           status: "idle",
         })
       }
+      // Já no catálogo: começa desmarcado (você decide). Repetidas no próprio arquivo não contam.
+      const flags = flagCatalog(
+        out.map((r) => ({ hash: r.hash, title: r.title, price: r.price ? Number(r.price) : null, skip: r.duplicateOf !== null })),
+        knownHashes,
+        legacyKeys,
+      )
+      out.forEach((r, i) => {
+        r.inCatalog = flags[i]
+        if (flags[i]) r.selected = false
+      })
       setSkipped(missing)
       setRows(out)
       setStatus({ phase: "review" })
@@ -164,7 +182,7 @@ export function ImportWizard({
       categoryId: categoryId || null,
       pickupFrom,
       published,
-      photos: [{ cloud_storage_path: urls.full.key, thumbnailPath: urls.thumb.key }],
+      photos: [{ cloud_storage_path: urls.full.key, thumbnailPath: urls.thumb.key, sourceHash: r.hash }],
     })
   }
 
@@ -197,6 +215,7 @@ export function ImportWizard({
   const selectedCount = rows.filter((r) => r.selected && r.status !== "ok").length
   const doneCount = rows.filter((r) => r.status === "ok").length
   const dupCount = rows.filter((r) => r.duplicateOf !== null).length
+  const catalogCount = rows.filter((r) => r.inCatalog !== null).length
 
   if (status.phase !== "review") {
     return (
@@ -260,7 +279,8 @@ export function ImportWizard({
 
       <p className="text-sm text-muted-foreground">
         {rows.length} fotos com legenda.
-        {dupCount > 0 && ` ${dupCount} repetidas (desmarcadas).`}
+        {dupCount > 0 && ` ${dupCount} repetidas no arquivo (desmarcadas).`}
+        {catalogCount > 0 && ` ${catalogCount} já estão no catálogo (desmarcadas).`}
         {skipped > 0 && ` ${skipped} sem a foto no .zip (ignoradas).`}
         {doneCount > 0 && ` ${doneCount} já publicadas.`}
       </p>
@@ -323,6 +343,11 @@ export function ImportWizard({
                 </select>
                 {r.duplicateOf !== null && (
                   <span className="rounded-full bg-amber-soft px-2 py-0.5 text-[11px] font-semibold">Foto repetida (igual à nº {r.duplicateOf})</span>
+                )}
+                {r.inCatalog && r.status !== "ok" && (
+                  <span className="rounded-full bg-amber-soft px-2 py-0.5 text-[11px] font-semibold">
+                    {r.inCatalog === "hash" ? "Já importada antes" : "Parece já estar no catálogo (mesmo nome e preço)"}
+                  </span>
                 )}
                 {!r.price && r.status !== "ok" && <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-[11px] font-semibold text-destructive">Sem preço</span>}
               </div>

@@ -14,6 +14,8 @@ const photoSchema = z.strictObject({
   id: idSchema.optional(),
   cloud_storage_path: z.string().refine(isValidKey, "Foto inválida"),
   thumbnailPath: z.string().refine(isValidKey, "Foto inválida").nullable().optional(),
+  // Só na importação do WhatsApp: impressão digital da foto original (64 hex)
+  sourceHash: z.string().regex(/^[0-9a-f]{64}$/, "Foto inválida").optional(),
 })
 
 export const itemSchema = z.strictObject({
@@ -119,6 +121,7 @@ export async function syncPhotos(tx: Tx, itemId: string, photos: z.infer<typeof 
           itemId,
           cloud_storage_path: p.cloud_storage_path,
           thumbnailPath: p.thumbnailPath ?? null,
+          sourceHash: p.sourceHash ?? null,
           isPublic: true,
           sortOrder: i,
         },

@@ -74,9 +74,13 @@ model ItemPhoto {
   thumbnailPath      String?
   isPublic           Boolean  @default(true)
   sortOrder          Int      @default(0)
+  /// SHA-256 do arquivo ORIGINAL (antes de comprimir) quando veio da importação do WhatsApp.
+  /// Serve para reconhecer a mesma foto num próximo lote. null = cadastro manual.
+  sourceHash         String?
   createdAt          DateTime @default(now())
 
   @@index([itemId])
+  @@index([sourceHash])
 }
 
 model ContactMessage {

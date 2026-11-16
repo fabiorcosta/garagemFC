@@ -105,3 +105,36 @@ export function itemTitle(p: { name: string; size: string; sizeLabel: "nº" | "t
   const name = p.name || "Item"
   return (p.size ? `${name} ${p.sizeLabel} ${p.size}` : name).slice(0, 120)
 }
+
+/** Chave de comparação com o catálogo: nome + preço, sem diferença de maiúsculas/espaços. */
+export function catalogKey(title: string, price: number) {
+  return `${title.normalize("NFC").toLowerCase().replace(/\s+/g, " ").trim()}|${Math.round(price)}`
+}
+
+/**
+ * Marca o que já está no catálogo. Para cada linha (na ordem):
+ *  - "hash": a mesma foto já foi importada antes (exato);
+ *  - "nome": existe item ANTIGO (sem impressão digital) com o mesmo nome+preço — cada item antigo
+ *    só cobre UMA linha, então um 3º "Melissa nº 39 R$ 50" novo não é confundido com os 2 que já existem;
+ *  - null: novo.
+ * Linhas com skip=true (repetidas dentro do próprio arquivo) não consomem nada.
+ */
+export function flagCatalog(
+  rows: { hash: string; title: string; price: number | null; skip?: boolean }[],
+  knownHashes: string[],
+  legacyKeys: string[],
+): ("hash" | "nome" | null)[] {
+  const known = new Set(knownHashes)
+  const legacy = new Map<string, number>()
+  for (const k of legacyKeys) legacy.set(k, (legacy.get(k) ?? 0) + 1)
+  return rows.map((r) => {
+    if (r.skip) return null
+    if (known.has(r.hash)) return "hash"
+    if (!r.price) return null
+    const k = catalogKey(r.title, r.price)
+    const left = legacy.get(k) ?? 0
+    if (left <= 0) return null
+    legacy.set(k, left - 1)
+    return "nome"
+  })
+}

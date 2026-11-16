@@ -3,14 +3,21 @@ import { ChevronLeft } from "lucide-react"
 import { adminPageContext } from "@/lib/admin-auth"
 import { getSettings } from "@/lib/queries"
 import { toDateInput } from "@/lib/pickup-date"
+import { catalogKey } from "@/lib/whatsapp-import"
 import { ImportWizard } from "./import-wizard"
 
 export default async function ImportPage() {
   const { db } = await adminPageContext()
-  const [categories, settings] = await Promise.all([
+  const [categories, settings, existing] = await Promise.all([
     db.category.findMany({ orderBy: [{ sortOrder: "asc" }, { name: "asc" }], select: { id: true, name: true } }),
     getSettings(),
+    db.item.findMany({ select: { title: true, price: true, photos: { select: { sourceHash: true } } } }),
   ])
+  // O que já está no catálogo, para a revisão desmarcar o que já foi importado:
+  //  - fotos importadas com impressão digital (exato);
+  //  - itens sem impressão digital (cadastro manual ou importados antes): por nome + preço.
+  const knownHashes = existing.flatMap((i) => i.photos.map((p) => p.sourceHash).filter((h): h is string => !!h))
+  const legacyKeys = existing.filter((i) => !i.photos.some((p) => p.sourceHash)).map((i) => catalogKey(i.title, i.price))
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -27,6 +34,8 @@ export default async function ImportPage() {
         categories={categories}
         conditions={settings.t.conditions.split("\n").map((c) => c.trim()).filter(Boolean)}
         maxPickup={settings.saleEndDate ? toDateInput(settings.saleEndDate) : ""}
+        knownHashes={knownHashes}
+        legacyKeys={legacyKeys}
       />
     </div>
   )
