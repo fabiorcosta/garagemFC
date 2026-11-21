@@ -44,14 +44,17 @@ export function ItemsTable({
   rows,
   categories,
   initialCategory = "",
+  initialPriority = "",
 }: {
   rows: Row[]
   categories: { id: string; name: string }[]
   initialCategory?: CatFilter
+  initialPriority?: "" | AdPriority
 }) {
   const router = useRouter()
   const [filter, setFilter] = useState<"" | ItemStatus | "rascunho">("")
   const [catFilter, setCatFilter] = useState<CatFilter>(initialCategory)
+  const [prioFilter, setPrioFilter] = useState<"" | AdPriority>(initialPriority)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [target, setTarget] = useState<string>("")
   const [bulkBusy, setBulkBusy] = useState(false)
@@ -62,7 +65,9 @@ export function ItemsTable({
   const saleRow = rows.find((r) => r.id === saleFor?.id)
   const matches = (r: Row, f: typeof filter) => (f === "rascunho" ? !r.published : f ? r.status === f : true)
   const matchesCat = (r: Row, c: CatFilter) => (c === "none" ? !r.categoryId : c ? r.categoryId === c : true)
-  const visible = rows.filter((r) => matches(r, filter) && matchesCat(r, catFilter))
+  const prioOf = (r: Row): AdPriority => (isAdPriority(r.adPriority) ? r.adPriority : "normal")
+  const matchesPrio = (r: Row, p: "" | AdPriority) => !p || prioOf(r) === p
+  const visible = rows.filter((r) => matches(r, filter) && matchesCat(r, catFilter) && matchesPrio(r, prioFilter))
   const allVisibleSelected = visible.length > 0 && visible.every((r) => selected.has(r.id))
 
   function toggle(id: string) {
@@ -217,6 +222,25 @@ export function ItemsTable({
             )}
           >
             {c.name} ({rows.filter((r) => matchesCat(r, c.id)).length})
+          </button>
+        ))}
+      </div>
+
+      <div className="flex items-center gap-2 overflow-x-auto">
+        <span className="shrink-0 text-xs font-semibold text-muted-foreground">Anúncio:</span>
+        {(["", "maxima", "alta", "normal", "nao_anunciar"] as const).map((p) => (
+          <button
+            key={p || "all"}
+            onClick={() => setPrioFilter(p)}
+            className={cn(
+              "h-8 shrink-0 rounded-full border px-3 text-xs font-semibold",
+              prioFilter === p ? "border-foreground bg-foreground text-background" : "bg-card",
+              prioFilter !== p && p === "maxima" && "border-primary text-primary",
+              prioFilter !== p && p === "alta" && "border-amber text-[#8A5A0B]",
+              prioFilter !== p && p === "nao_anunciar" && "text-muted-foreground",
+            )}
+          >
+            {p ? AD_PRIORITY_LABEL[p] : "Todas"} ({rows.filter((r) => matchesPrio(r, p)).length})
           </button>
         ))}
       </div>

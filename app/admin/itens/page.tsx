@@ -6,6 +6,7 @@ import { adminPageContext } from "@/lib/admin-auth"
 import { photoThumbUrl } from "@/lib/file-url"
 import { pickupLabel, toDateInput } from "@/lib/pickup-date"
 import type { SaleValues } from "@/lib/sale-shared"
+import { isAdPriority } from "@/lib/ad-priority"
 import { ItemsTable } from "./items-table"
 
 export default async function AdminItemsPage(props: PageProps<"/admin/itens">) {
@@ -13,6 +14,9 @@ export default async function AdminItemsPage(props: PageProps<"/admin/itens">) {
   // ?cat=<id> ou ?cat=none (vindo do Dashboard); valor fora do formato é ignorado
   const rawCat = (await props.searchParams).cat
   const cat = typeof rawCat === "string" && /^(none|c[a-z0-9]{20,31})$/.test(rawCat) ? rawCat : ""
+  // ?prio=maxima|alta|normal|nao_anunciar (vindo do Dashboard); outro valor é ignorado
+  const rawPrio = (await props.searchParams).prio
+  const prio = isAdPriority(rawPrio) ? rawPrio : ""
   const categories = await db.category.findMany({ orderBy: [{ sortOrder: "asc" }, { name: "asc" }], select: { id: true, name: true } })
   const items = await db.item.findMany({
     orderBy: { createdAt: "desc" },
@@ -69,7 +73,7 @@ export default async function AdminItemsPage(props: PageProps<"/admin/itens">) {
           </Link>
         </div>
       </div>
-      <ItemsTable rows={rows} categories={categories} initialCategory={cat} />
+      <ItemsTable rows={rows} categories={categories} initialCategory={cat} initialPriority={prio} />
     </div>
   )
 }

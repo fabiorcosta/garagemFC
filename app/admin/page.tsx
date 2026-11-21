@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils"
 import { adminPageContext } from "@/lib/admin-auth"
 import { formatPrice } from "@/lib/format"
 import { getStatusCounts } from "@/lib/queries"
+import { AD_PRIORITY_LABEL, isAdPriority } from "@/lib/ad-priority"
 
 export default async function DashboardPage() {
   const { db } = await adminPageContext()
@@ -24,7 +25,7 @@ export default async function DashboardPage() {
       select: { finalPrice: true, paidPercent: true, item: { select: { price: true } } },
     }),
     db.category.findMany({ orderBy: [{ sortOrder: "asc" }, { name: "asc" }], select: { id: true, name: true } }),
-    db.item.findMany({ select: { categoryId: true, status: true, price: true, published: true, sale: { select: { finalPrice: true } } } }),
+    db.item.findMany({ select: { categoryId: true, status: true, price: true, published: true, adPriority: true, sale: { select: { finalPrice: true } } } }),
   ])
   // Resumo por categoria (inclui rascunhos na contagem total; valores só de itens publicados)
   type CatRow = { id: string; name: string; total: number; disponivel: number; vendido: number; aVenda: number; vendidoValor: number }
@@ -46,6 +47,17 @@ export default async function DashboardPage() {
     }
   }
   const catRows = [...byCat.values()].filter((r) => r.total > 0 || r.id !== "none")
+
+  // Prioridade de anúncio (privada): o que anunciar e o que pausar
+  const prioRows = (["maxima", "alta", "normal", "nao_anunciar"] as const).map((p) => {
+    const list = allItems.filter((i) => (isAdPriority(i.adPriority) ? i.adPriority : "normal") === p)
+    return {
+      p,
+      total: list.length,
+      anunciaveis: list.filter((i) => i.published && i.status === "disponivel").length,
+      pausar: p === "nao_anunciar" ? 0 : list.filter((i) => !i.published || i.status !== "disponivel").length,
+    }
+  })
   // Valor de cada venda = valor combinado (ou o preço do anúncio, se não informado)
   const saleValue = (s: (typeof sales)[number]) => s.finalPrice ?? s.item.price
   const received = sales.reduce((sum, s) => sum + (saleValue(s) * s.paidPercent) / 100, 0)
@@ -113,6 +125,31 @@ export default async function DashboardPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border bg-card p-4">
+        <h2 className="font-bold">Prioridade de anúncio</h2>
+        <p className="mb-2 text-xs text-muted-foreground">Não aparece no site. É o que o agente de anúncios recebe.</p>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {prioRows.map((r) => (
+            <Link
+              key={r.p}
+              href={`/admin/itens?prio=${r.p}`}
+              className={cn(
+                "flex flex-col gap-0.5 rounded-xl border p-3 hover:bg-muted/50",
+                r.p === "maxima" && "border-primary/50",
+                r.p === "alta" && "border-amber",
+              )}
+            >
+              <span className="text-xs font-semibold text-muted-foreground">{AD_PRIORITY_LABEL[r.p]}</span>
+              <span className="text-2xl font-extrabold">{r.total}</span>
+              <span className="text-[11px] text-muted-foreground">
+                {r.p === "nao_anunciar" ? "fora dos anúncios" : `${r.anunciaveis} à venda`}
+                {r.pausar > 0 && <span className="font-semibold text-destructive"> · {r.pausar} pausar</span>}
+              </span>
+            </Link>
+          ))}
         </div>
       </section>
 
