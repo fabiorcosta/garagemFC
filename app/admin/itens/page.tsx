@@ -33,6 +33,7 @@ export default async function AdminItemsPage(props: PageProps<"/admin/itens">) {
     status: i.status,
     category: i.category?.name ?? null,
     categoryId: i.categoryId,
+    adPriority: i.adPriority,
     thumb: photoThumbUrl(i.photos[0]),
     featured: i.featured,
     published: i.published,

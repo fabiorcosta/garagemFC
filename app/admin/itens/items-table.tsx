@@ -12,6 +12,7 @@ import { ConfirmDialog } from "@/components/admin/confirm-dialog"
 import { cn } from "@/lib/utils"
 import { adminFetch } from "@/lib/admin-fetch"
 import { formatPrice, STATUS_LABEL, STATUSES, type ItemStatus } from "@/lib/format"
+import { AD_PRIORITIES, AD_PRIORITY_LABEL, isAdPriority, type AdPriority } from "@/lib/ad-priority"
 
 type Row = {
   id: string
@@ -21,6 +22,7 @@ type Row = {
   status: string
   category: string | null
   categoryId: string | null
+  adPriority: string
   thumb: string | null
   featured: boolean
   published: boolean
@@ -53,6 +55,7 @@ export function ItemsTable({
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [target, setTarget] = useState<string>("")
   const [bulkBusy, setBulkBusy] = useState(false)
+  const [targetPriority, setTargetPriority] = useState<"" | AdPriority>("")
   const [busy, setBusy] = useState<string | null>(null)
   // markSold vem da AÇÃO que abriu a janela, não da linha (que pode estar desatualizada logo após mudar o status)
   const [saleFor, setSaleFor] = useState<{ id: string; markSold: boolean } | null>(null)
@@ -112,6 +115,38 @@ export function ItemsTable({
       toast.error((e as Error).message)
     } finally {
       setBusy(null)
+    }
+  }
+
+  async function setPriority(id: string, adPriority: AdPriority) {
+    setBusy(id)
+    try {
+      await adminFetch(`/api/admin/items/${id}`, "PUT", { adPriority })
+      toast.success(`Prioridade de anúncio: ${AD_PRIORITY_LABEL[adPriority]}`)
+      router.refresh()
+    } catch (e) {
+      toast.error((e as Error).message)
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  async function applyPriority() {
+    if (!targetPriority) return toast.error("Escolha a prioridade")
+    setBulkBusy(true)
+    try {
+      const res = await adminFetch<{ updated: number }>("/api/admin/items/bulk-priority", "POST", {
+        ids: [...selected],
+        adPriority: targetPriority,
+      })
+      toast.success(`${res.updated} ${res.updated === 1 ? "item" : "itens"} com prioridade ${AD_PRIORITY_LABEL[targetPriority]}`)
+      setSelected(new Set())
+      setTargetPriority("")
+      router.refresh()
+    } catch (e) {
+      toast.error((e as Error).message)
+    } finally {
+      setBulkBusy(false)
     }
   }
 
@@ -268,6 +303,25 @@ export function ItemsTable({
                   </button>
                 ))}
               </div>
+              <select
+                aria-label="Prioridade para anúncios"
+                title="Prioridade para anúncios (não aparece no site)"
+                value={isAdPriority(r.adPriority) ? r.adPriority : "normal"}
+                disabled={busy === r.id}
+                onChange={(e) => isAdPriority(e.target.value) && setPriority(r.id, e.target.value)}
+                className={cn(
+                  "h-8 rounded-full border bg-card px-2 text-[11px] font-semibold",
+                  r.adPriority === "maxima" && "border-primary text-primary",
+                  r.adPriority === "alta" && "border-amber text-[#8A5A0B]",
+                  r.adPriority === "nao_anunciar" && "text-muted-foreground line-through",
+                )}
+              >
+                {AD_PRIORITIES.map((p) => (
+                  <option key={p} value={p}>
+                    Anúncio: {AD_PRIORITY_LABEL[p]}
+                  </option>
+                ))}
+              </select>
               <div className="ml-auto flex flex-wrap">
                 <button
                   onClick={() => setPublished(r.id, !r.published)}
@@ -346,6 +400,28 @@ export function ItemsTable({
             className="h-10 rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-50"
           >
             {bulkBusy ? "Aplicando…" : "Aplicar"}
+          </button>
+          <span className="hidden h-6 w-px bg-border sm:block" aria-hidden />
+          <select
+            aria-label="Prioridade para anúncios"
+            value={targetPriority}
+            onChange={(e) => setTargetPriority(isAdPriority(e.target.value) ? e.target.value : "")}
+            className="h-10 min-w-40 rounded-md border bg-background px-3 text-sm"
+          >
+            <option value="">Prioridade de anúncio…</option>
+            {AD_PRIORITIES.map((p) => (
+              <option key={p} value={p}>
+                {AD_PRIORITY_LABEL[p]}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={applyPriority}
+            disabled={bulkBusy || !targetPriority}
+            className="h-10 rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+          >
+            Aplicar
           </button>
           <button type="button" onClick={() => setSelected(new Set())} className="ml-auto rounded-full p-2 hover:bg-muted" aria-label="Limpar seleção">
             <X className="size-4" />

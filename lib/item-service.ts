@@ -4,6 +4,7 @@ import { z } from "zod"
 import { idSchema } from "./api"
 import type { AdminDb } from "./db"
 import { slugify, STATUSES } from "./format"
+import { AD_PRIORITIES } from "./ad-priority"
 import { MAX_PHOTOS, referenceUrlSchema } from "./validators"
 import { parsePickupDate, toDateInput } from "./pickup-date"
 import { deleteFile, isValidKey } from "./s3"
@@ -48,8 +49,8 @@ export const categorySchema = z.strictObject({
 
 /** Ação rápida da tabela: muda só o status e/ou a publicação. */
 export const quickUpdateSchema = z
-  .strictObject({ status: z.enum(STATUSES).optional(), published: z.boolean().optional() })
-  .refine((d) => d.status !== undefined || d.published !== undefined, "Nada para alterar")
+  .strictObject({ status: z.enum(STATUSES).optional(), published: z.boolean().optional(), adPriority: z.enum(AD_PRIORITIES).optional() })
+  .refine((d) => d.status !== undefined || d.published !== undefined || d.adPriority !== undefined, "Nada para alterar")
 
 /** Campos que as rotas devolvem ao navegador (nada além disso). */
 export const itemPublicFields = { id: true, slug: true, title: true, status: true, published: true } satisfies Prisma.ItemSelect

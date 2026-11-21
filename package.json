@@ -12,7 +12,9 @@
     "postinstall": "prisma generate",
     "db:deploy": "tsx scripts/db-pre-push.ts && prisma db push --skip-generate && tsx scripts/db-security.ts && tsx scripts/seed.ts && tsx scripts/remove-sample-items.ts && tsx scripts/delete-items.ts",
     "admin:hash": "tsx scripts/admin-password.ts",
-    "admin:reset": "tsx scripts/admin-password.ts --apply"
+    "admin:reset": "tsx scripts/admin-password.ts --apply",
+    "ads:token": "tsx scripts/ads-token.ts",
+    "ads:token:apply": "tsx scripts/ads-token.ts --apply"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1141.0",
