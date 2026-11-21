@@ -16,9 +16,17 @@ const file = path.join(homedir(), "garagem-chave-api-anuncios.txt")
 const token = randomBytes(32).toString("base64url")
 const hash = createHash("sha256").update(token).digest("hex")
 
-writeFileSync(file, `${token}\n`, { mode: 0o600 })
+// Sem quebra de linha no fim: copiar e colar sai exato (formulários recusam o caractere invisível)
+writeFileSync(file, token, { mode: 0o600 })
 console.log(`\n✓ Chave nova gravada em ${file} (só o seu usuário consegue ler).`)
-console.log("  Passe o conteúdo desse arquivo ao agente de anúncios, no cabeçalho: Authorization: Bearer <chave>\n")
+console.log("  Passe o conteúdo desse arquivo ao agente de anúncios, no cabeçalho: Authorization: Bearer <chave>")
+// No Mac, já deixa a chave na área de transferência (sem mostrar na tela)
+try {
+  execFileSync("pbcopy", { input: token })
+  console.log("  A chave já está copiada: é só colar (Cmd+V) no formulário do agente.\n")
+} catch {
+  console.log("")
+}
 
 if (!apply) {
   console.log("Cole este valor em ADS_API_TOKEN_SHA256 (Railway → garagemFC → Variables):\n")
