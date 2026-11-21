@@ -1,4 +1,4 @@
-/** Prioridade para anúncios pagos. Só o painel e a API protegida (/api/anuncios/itens) enxergam. */
+/** Prioridade para anúncios pagos. Só o painel e a API protegida (/api/produtos) enxergam. */
 export const AD_PRIORITIES = ["nao_anunciar", "normal", "alta", "maxima"] as const
 export type AdPriority = (typeof AD_PRIORITIES)[number]
 

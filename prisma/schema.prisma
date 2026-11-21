@@ -53,7 +53,7 @@ model Item {
   acceptsOffers Boolean          @default(false)
   featured      Boolean          @default(false)
   /// Prioridade para anúncios pagos: "nao_anunciar" | "normal" | "alta" | "maxima".
-  /// PRIVADO: nunca selecionado nas consultas públicas; só painel e /api/anuncios/itens (com chave).
+  /// PRIVADO: nunca selecionado nas consultas públicas; só painel e /api/produtos (com chave).
   adPriority    String           @default("normal")
   categoryId    String?
   category      Category?        @relation(fields: [categoryId], references: [id], onDelete: SetNull)

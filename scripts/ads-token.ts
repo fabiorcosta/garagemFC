@@ -1,5 +1,5 @@
 /**
- * Cria a chave da API de anúncios (/api/anuncios/itens) sem ela aparecer na tela nem no histórico.
+ * Cria a chave da API de anúncios (/api/produtos) sem ela aparecer na tela nem no histórico.
  *   npm run ads:token          → grava a chave num arquivo só seu e mostra o valor para ADS_API_TOKEN_SHA256.
  *   npm run ads:token:apply    → igual, e já grava ADS_API_TOKEN_SHA256 no Railway (CLI `railway` logado).
  * O site guarda só o SHA-256; a chave em si fica no arquivo (permissão 600) para você passar ao agente.

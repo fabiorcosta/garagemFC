@@ -3,12 +3,12 @@ import { NextResponse } from "next/server"
 import { isAdPriority } from "@/lib/ad-priority"
 import { publicDb as db, rateLimitHit } from "@/lib/db"
 import { getFileUrl } from "@/lib/file-url"
-import { siteUrl } from "@/lib/format"
+import { siteUrl, slugify } from "@/lib/format"
 import { toDateInput, todayInput } from "@/lib/pickup-date"
 import { clientIp, rlKey } from "@/lib/security"
 
 /**
- * GET /api/anuncios/itens — catálogo para o agente de anúncios pagos. SOMENTE LEITURA.
+ * GET /api/produtos — catálogo para o agente de anúncios pagos. SOMENTE LEITURA.
  *
  * Acesso: cabeçalho "Authorization: Bearer <chave>". O servidor guarda só o SHA-256 da chave
  * (ADS_API_TOKEN_SHA256); sem essa variável, a API fica desligada (falha fechada).
@@ -28,6 +28,12 @@ function tokenOk(header: string | null) {
   if (!m) return false
   const got = createHash("sha256").update(m[1]).digest()
   return timingSafeEqual(got, Buffer.from(expected, "hex"))
+}
+
+/** "Novo", "Sem uso", "Lacrado" → "sem_uso"; demais: código do texto ("Bom estado" → "bom_estado"). */
+function conditionCode(text: string) {
+  if (/\b(novo|nova|sem uso|lacrad[oa]|nunca usad[oa])\b/i.test(text)) return "sem_uso"
+  return slugify(text).replace(/-/g, "_") || "nao_informado"
 }
 
 function absolute(url: string | null) {
@@ -66,22 +72,30 @@ export async function GET(req: Request) {
   })
 
   const base = siteUrl()
-  const itens = rows.map((r) => ({
-    id: r.id,
-    slug: r.slug,
-    link: `${base}/itens/${r.slug}`,
-    nome: r.title,
-    preco: r.price,
-    fotos: r.photos.map((p) => absolute(p.url || getFileUrl(p.cloud_storage_path))).filter((u): u is string => !!u),
-    categoria: r.category ? { nome: r.category.name, slug: r.category.slug } : null,
-    condicao: r.condition,
-    // "disponivel" | "reservado" | "vendido" — reservado/vendido: pausar anúncio
-    status: r.status,
-    // AAAA-MM-DD; null = já pode retirar (sem data ou data já passou)
-    disponivelAPartirDe: r.pickupFrom && toDateInput(r.pickupFrom) > todayInput() ? toDateInput(r.pickupFrom) : null,
-    prioridade: isAdPriority(r.adPriority) ? r.adPriority : "normal",
-    atualizadoEm: r.updatedAt.toISOString(),
-  }))
+  // Formato combinado com o agente de anúncios: lista direta, campos em snake_case.
+  const produtos = rows.map((r) => {
+    const fotos = r.photos.map((p) => absolute(p.url || getFileUrl(p.cloud_storage_path))).filter((u): u is string => !!u)
+    return {
+      slug: r.slug,
+      nome: r.title,
+      preco: r.price,
+      // "disponivel" | "reservado" | "vendido" — reservado/vendido: pausar anúncio
+      status: r.status,
+      prioridade: isAdPriority(r.adPriority) ? r.adPriority : "normal",
+      categoria: r.category?.slug ?? null,
+      condicao: conditionCode(r.condition),
+      // AAAA-MM-DD; null = já pode retirar (sem data ou data já passou)
+      disponivel_a_partir: r.pickupFrom && toDateInput(r.pickupFrom) > todayInput() ? toDateInput(r.pickupFrom) : null,
+      foto_url: fotos[0] ?? null,
+      atualizado_em: r.updatedAt.toISOString(),
+      // Extras (não obrigatórios)
+      id: r.id,
+      link: `${base}/itens/${r.slug}`,
+      fotos,
+      condicao_texto: r.condition,
+      categoria_nome: r.category?.name ?? null,
+    }
+  })
 
-  return json({ geradoEm: new Date().toISOString(), total: itens.length, itens })
+  return json(produtos)
 }
